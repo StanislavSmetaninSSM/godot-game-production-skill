@@ -1,0 +1,4 @@
+interface:
+  display_name: "Godot Game Production"
+  short_description: "Evidence-led Godot game production"
+  default_prompt: "Use $godot-game-production to take this Godot game through evidence-led production."

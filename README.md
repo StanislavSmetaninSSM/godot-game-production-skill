@@ -61,7 +61,6 @@ $stagingRoot = Join-Path $transactionRoot 'staging'
 $backup = Join-Path $transactionRoot 'backup'
 $installer = Join-Path $codexHome 'skills\.system\skill-installer\scripts\install-skill-from-github.py'
 $validator = Join-Path $codexHome 'skills\.system\skill-creator\scripts\quick_validate.py'
-$backupCreated = $false
 
 New-Item -ItemType Directory -Force -Path $skillsRoot | Out-Null
 if (Test-Path -LiteralPath $transactionRoot) { throw "Transaction path already exists: $transactionRoot" }
@@ -72,7 +71,7 @@ function Write-ManualRecovery {
 }
 
 function Restore-Backup {
-  if (-not $backupCreated -or -not (Test-Path -LiteralPath $backup)) { return }
+  if (-not (Test-Path -LiteralPath $backup)) { return }
   if (Test-Path -LiteralPath $target) {
     try {
       Remove-Item -Recurse -Force -LiteralPath $target
@@ -98,14 +97,13 @@ try {
 
   if (Test-Path -LiteralPath $target) {
     Move-Item -LiteralPath $target -Destination $backup
-    $backupCreated = $true
   }
 
   Move-Item -LiteralPath (Join-Path $stagingRoot 'godot-game-production') -Destination $target
   & python $validator $target
   if ($LASTEXITCODE -ne 0) { throw 'Replacement skill failed final Codex validation.' }
 
-  if ($backupCreated) {
+  if (Test-Path -LiteralPath $backup) {
     Write-Host "Update succeeded. Previous version retained at $backup."
   } else {
     Write-Host "Update succeeded. Transaction directory retained at $transactionRoot."
@@ -125,7 +123,6 @@ skills_root="$codex_home/skills"
 target="$skills_root/godot-game-production"
 installer="$codex_home/skills/.system/skill-installer/scripts/install-skill-from-github.py"
 validator="$codex_home/skills/.system/skill-creator/scripts/quick_validate.py"
-backup_created=false
 
 mkdir -p "$skills_root"
 mkdir_status=$?
@@ -141,7 +138,7 @@ manual_recovery() {
 }
 
 restore_backup() {
-  if [ "$backup_created" = true ] && [ -d "$backup" ]; then
+  if [ -e "$backup" ] || [ -d "$backup" ]; then
     if [ -e "$target" ]; then
       rm -rf "$target"
       removal_status=$?
@@ -187,7 +184,6 @@ if [ -e "$target" ]; then
   mv "$target" "$backup"
   backup_status=$?
   if [ "$backup_status" -ne 0 ]; then exit "$backup_status"; fi
-  backup_created=true
 fi
 mv "$staging_root/godot-game-production" "$target"
 replacement_status=$?
@@ -196,7 +192,7 @@ python3 "$validator" "$target"
 final_validation_status=$?
 if [ "$final_validation_status" -ne 0 ]; then exit "$final_validation_status"; fi
 
-if [ "$backup_created" = true ]; then
+if [ -e "$backup" ] || [ -d "$backup" ]; then
   printf 'Update succeeded. Previous version retained at %s.\n' "$backup"
 else
   printf 'Update succeeded. Transaction directory retained at %s.\n' "$transaction_root"

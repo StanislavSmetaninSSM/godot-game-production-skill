@@ -47,28 +47,55 @@ Restart or reload Codex after installation if its current session does not disco
 
 ## Safe updates
 
-The commands below leave the working installation untouched until a staged download passes Codex's validator. If moving the current installation to its backup fails, the command stops before changing the target. If replacement or final validation fails, the confirmed backup is restored and the failed candidate is retained alongside it for inspection.
+The commands below leave the working installation untouched until an official-installer download passes Codex's validator in a unique transaction directory under the skills root. If moving the current installation to its backup fails, the command stops before changing the target. If replacement or final validation fails, rollback prioritizes restoring the confirmed backup; the failed replacement may be discarded.
 
 ### Windows (PowerShell)
 
 ```powershell
 $ErrorActionPreference = 'Stop'
-$repositoryUrl = 'https://github.com/StanislavSmetaninSSM/godot-game-production-skill.git'
 $codexHome = if ($env:CODEX_HOME) { $env:CODEX_HOME } else { Join-Path $HOME '.codex' }
 $skillsRoot = Join-Path $codexHome 'skills'
 $target = Join-Path $skillsRoot 'godot-game-production'
-$stagingRoot = Join-Path ([System.IO.Path]::GetTempPath()) ('godot-game-production-stage-' + [guid]::NewGuid())
-$backup = Join-Path $skillsRoot ('godot-game-production.backup-' + [guid]::NewGuid())
-$failedCandidate = Join-Path $skillsRoot ('godot-game-production.failed-' + [guid]::NewGuid())
+$transactionRoot = Join-Path $skillsRoot ('.godot-game-production-update-' + [guid]::NewGuid())
+$stagingRoot = Join-Path $transactionRoot 'staging'
+$backup = Join-Path $transactionRoot 'backup'
+$installer = Join-Path $codexHome 'skills\.system\skill-installer\scripts\install-skill-from-github.py'
 $validator = Join-Path $codexHome 'skills\.system\skill-creator\scripts\quick_validate.py'
 $backupCreated = $false
 
+New-Item -ItemType Directory -Force -Path $skillsRoot | Out-Null
+if (Test-Path -LiteralPath $transactionRoot) { throw "Transaction path already exists: $transactionRoot" }
+New-Item -ItemType Directory -Path $transactionRoot | Out-Null
+
+function Write-ManualRecovery {
+  Write-Warning "Manual recovery: after inspecting '$target', move '$backup' to '$target'."
+}
+
+function Restore-Backup {
+  if (-not $backupCreated -or -not (Test-Path -LiteralPath $backup)) { return }
+  if (Test-Path -LiteralPath $target) {
+    try {
+      Remove-Item -Recurse -Force -LiteralPath $target
+    } catch {
+      Write-Warning "Rollback could not remove failed replacement '$target': $($_.Exception.Message)"
+      Write-ManualRecovery
+      return
+    }
+  }
+  try {
+    Move-Item -LiteralPath $backup -Destination $target
+  } catch {
+    Write-Warning "Rollback could not restore backup '$backup': $($_.Exception.Message)"
+    Write-ManualRecovery
+  }
+}
+
 try {
-  git clone --depth 1 $repositoryUrl $stagingRoot
+  & python $installer --repo StanislavSmetaninSSM/godot-game-production-skill --path godot-game-production --dest $stagingRoot
+  if ($LASTEXITCODE -ne 0) { throw 'Staged Codex installer download failed.' }
   & python $validator (Join-Path $stagingRoot 'godot-game-production')
   if ($LASTEXITCODE -ne 0) { throw 'Staged skill failed Codex validation.' }
 
-  New-Item -ItemType Directory -Force -Path $skillsRoot | Out-Null
   if (Test-Path -LiteralPath $target) {
     Move-Item -LiteralPath $target -Destination $backup
     $backupCreated = $true
@@ -78,54 +105,104 @@ try {
   & python $validator $target
   if ($LASTEXITCODE -ne 0) { throw 'Replacement skill failed final Codex validation.' }
 
-  if ($backupCreated) { Remove-Item -Recurse -Force -LiteralPath $backup }
-} catch {
-  if ($backupCreated -and (Test-Path -LiteralPath $backup)) {
-    if (Test-Path -LiteralPath $target) { Move-Item -LiteralPath $target -Destination $failedCandidate }
-    Move-Item -LiteralPath $backup -Destination $target
+  if ($backupCreated) {
+    Write-Host "Update succeeded. Previous version retained at $backup."
+  } else {
+    Write-Host "Update succeeded. Transaction directory retained at $transactionRoot."
   }
+} catch {
+  Restore-Backup
   throw
-} finally {
-  if (Test-Path -LiteralPath $stagingRoot) { Remove-Item -Recurse -Force -LiteralPath $stagingRoot }
 }
 ```
 
 ### macOS and Linux (shell)
 
 ```sh
-set -eu
-repository_url='https://github.com/StanislavSmetaninSSM/godot-game-production-skill.git'
+set -u
 codex_home="${CODEX_HOME:-$HOME/.codex}"
 skills_root="$codex_home/skills"
 target="$skills_root/godot-game-production"
-staging_root="$(mktemp -d)"
-backup="$skills_root/godot-game-production.backup-$(date +%s)"
-failed_candidate="$skills_root/godot-game-production.failed-$(date +%s)"
+installer="$codex_home/skills/.system/skill-installer/scripts/install-skill-from-github.py"
 validator="$codex_home/skills/.system/skill-creator/scripts/quick_validate.py"
 backup_created=false
 
-rollback() {
+mkdir -p "$skills_root"
+mkdir_status=$?
+if [ "$mkdir_status" -ne 0 ]; then exit "$mkdir_status"; fi
+transaction_root="$(mktemp -d "$skills_root/.godot-game-production-update.XXXXXX")"
+transaction_status=$?
+if [ "$transaction_status" -ne 0 ]; then exit "$transaction_status"; fi
+staging_root="$transaction_root/staging"
+backup="$transaction_root/backup"
+
+manual_recovery() {
+  printf >&2 'Manual recovery: after inspecting "%s", move "%s" to "%s".\n' "$target" "$backup" "$target"
+}
+
+restore_backup() {
   if [ "$backup_created" = true ] && [ -d "$backup" ]; then
-    if [ -e "$target" ]; then mv "$target" "$failed_candidate"; fi
+    if [ -e "$target" ]; then
+      rm -rf "$target"
+      removal_status=$?
+      if [ "$removal_status" -ne 0 ] || [ -e "$target" ]; then
+        printf >&2 'Rollback could not remove failed replacement "%s"; backup remains at "%s".\n' "$target" "$backup"
+        manual_recovery
+        return
+      fi
+    fi
     mv "$backup" "$target"
+    restore_status=$?
+    if [ "$restore_status" -ne 0 ]; then
+      printf >&2 'Rollback could not restore backup "%s"; backup remains at "%s".\n' "$backup" "$backup"
+      manual_recovery
+    fi
   fi
 }
-cleanup() { rm -rf "$staging_root"; }
-trap 'rollback; cleanup' EXIT HUP INT TERM
 
-git clone --depth 1 "$repository_url" "$staging_root/repository"
-python3 "$validator" "$staging_root/repository/godot-game-production"
-mkdir -p "$skills_root"
+on_exit() {
+  status=$?
+  trap - EXIT HUP INT TERM
+  if [ "$status" -ne 0 ]; then restore_backup; fi
+  exit "$status"
+}
+
+on_signal() {
+  trap - HUP INT TERM
+  exit "$1"
+}
+
+trap 'on_exit' EXIT
+trap 'on_signal 129' HUP
+trap 'on_signal 130' INT
+trap 'on_signal 143' TERM
+
+python3 "$installer" --repo StanislavSmetaninSSM/godot-game-production-skill --path godot-game-production --dest "$staging_root"
+installer_status=$?
+if [ "$installer_status" -ne 0 ]; then exit "$installer_status"; fi
+python3 "$validator" "$staging_root/godot-game-production"
+staged_validation_status=$?
+if [ "$staged_validation_status" -ne 0 ]; then exit "$staged_validation_status"; fi
 if [ -e "$target" ]; then
   mv "$target" "$backup"
+  backup_status=$?
+  if [ "$backup_status" -ne 0 ]; then exit "$backup_status"; fi
   backup_created=true
 fi
-mv "$staging_root/repository/godot-game-production" "$target"
+mv "$staging_root/godot-game-production" "$target"
+replacement_status=$?
+if [ "$replacement_status" -ne 0 ]; then exit "$replacement_status"; fi
 python3 "$validator" "$target"
+final_validation_status=$?
+if [ "$final_validation_status" -ne 0 ]; then exit "$final_validation_status"; fi
 
-if [ "$backup_created" = true ]; then rm -rf "$backup"; fi
+if [ "$backup_created" = true ]; then
+  printf 'Update succeeded. Previous version retained at %s.\n' "$backup"
+else
+  printf 'Update succeeded. Transaction directory retained at %s.\n' "$transaction_root"
+fi
 trap - EXIT HUP INT TERM
-cleanup
+exit 0
 ```
 
 ## Manual installation

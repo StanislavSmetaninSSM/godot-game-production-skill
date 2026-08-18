@@ -108,6 +108,11 @@ Do not abbreviate this to an approval-only refusal.
 
 ## Route only what is needed
 
+- Read `references/production-operations.md` when the current production interval
+  has two or more implementation slices scheduled to overlap or be delegated
+  concurrently, or when multiple agents or worktrees will implement related parts
+  of the same candidate. Do not read it merely for several serial steps in one
+  bounded slice.
 - Read `references/procedural-art.md` for generated visual systems or repeated assets.
 - For 2D or 2.5D, read `references/godot-2d.md` and do not read the 3D reference.
 - For 3D, read `references/godot-3d.md` and do not read the 2D reference.
@@ -118,6 +123,9 @@ Do not abbreviate this to an approval-only refusal.
 
 ## Stop rules
 
+- Give every mutable state, decision, event, timer, and persisted save fact
+  exactly one authoritative owner. Consumers read or subscribe to that owner;
+  they must not infer, shadow, or independently write a competing version.
 - A screenshot never proves mechanics; require input, state, outcome, and
   filmstrip/video evidence from the target Godot build.
 - Core play, systems/holism, content, visual, audio/feedback, UX/onboarding,

@@ -152,7 +152,7 @@ contract; no production wording has been written in this RED task.
   GREEN outputs were withheld.
 - At most two evaluators were active concurrently. The exposed root for every
   variant contained only `godot-game-production`.
-- All 160 GREEN responses were read and scored manually against every criterion.
+- All 175 GREEN responses were read and scored manually against every criterion.
   Keyword presence was not treated as a verdict. When a child emitted both an
   intermediate message and a final answer, the submitted final answer governed the
   verdict.
@@ -165,7 +165,8 @@ contract; no production wording has been written in this RED task.
 | GREEN v2 | `b45e5e5` plus skill-guidance working-tree diff SHA-256 `c9ddc11dfb7c17d87cc1da299c25309116040a7efedff7301b784efde097b1fc`; `C:\Temp\godot-ops-green-skill-d863196cddc244178406b1b74944a960\godot-game-production` | V1 showed neutral/post-release owner deferral, an abbreviated slice contract, all-repeat playtest matrices, omitted fixture provenance, and missing process-confirmation actions. Added only direct counters in the already allowed owner, slice, gameplay-evidence, and capture sections. |
 | GREEN v3 | `b45e5e5` plus diff SHA-256 `c276936313452b63ec7e555567153bf425c878b90d70370b5363c8610c8c6619`; `C:\Temp\godot-ops-green-skill-592daa2822a142e68cb77406f1925321\godot-game-production` | V2 still omitted named slice fields, actual diversified rows, provenance rows, and an explicit confirmation request. Required the complete field table, a concrete slot allocation, a provenance record shape, separate facet/milestone states, and an action verb for confirmation. |
 | GREEN v4 | `b45e5e5` plus diff SHA-256 `ce6cbd39303b554a699aaca64bcbe9d5f3beb78bb0a52f69b751ee5dc2cd4ac8`; `C:\Temp\godot-ops-green-skill-dab6c88a19e3411e922a906227403dca\godot-game-production` | V3 still sometimes described missing coverage or provenance as future work instead of producing it, and omitted the process action when choosing to wait. Added worked output rows and required the active-load action even when waiting. |
-| GREEN v5 (final) | `b45e5e5` plus diff SHA-256 `cc5cec5f0e3d7c386db274feed7e4ad97552983f0e73f33eabc722a8be44c2b2`; `C:\Temp\godot-ops-green-skill-9852937477694cea90d87b623f826444\godot-game-production` | V1-v4 showed that gameplay-evidence wording was not observably activated for late-stage matrix/fixture prompts, while explicitly routed release checks were. Added one routing-only bullet for playtest matrices, fixtures, seeded coverage, and integrated journeys; it adds no policy and preserves the post-approval core-loop route. Also required the OPS-06 ownership action to remain in the submitted final answer after one two-part response lost it from the final. |
+| GREEN v5 (initial close) | `b45e5e5` plus diff SHA-256 `cc5cec5f0e3d7c386db274feed7e4ad97552983f0e73f33eabc722a8be44c2b2`; `C:\Temp\godot-ops-green-skill-9852937477694cea90d87b623f826444\godot-game-production` | V1-v4 showed that gameplay-evidence wording was not observably activated for late-stage matrix/fixture prompts, while explicitly routed release checks were. Added one routing-only bullet for playtest matrices, fixtures, seeded coverage, and integrated journeys; it adds no policy and preserves the post-approval core-loop route. Also required the OPS-06 ownership action to remain in the submitted final answer after one two-part response lost it from the final. |
+| GREEN v6 (corrective final) | Source commit `4ed128b55d861e7c5a368690f1cfc020934035e0`; `C:\Temp\godot-ops-green-skill-e47b34e8b0b742b6898c42574b450828\godot-game-production` | Independent review found that OPS-02's v1 sample set became stale after v2/v3 changed the slice-contract guidance. V6 reran OPS-02 and both guards on the final committed skill. All 15 samples passed, so no guidance changed. |
 
 No other policy was added. README and tests were not edited. The existing state
 sequence, sub-skills, visual/TDD/review/evidence/release gates, and fail-closed
@@ -308,7 +309,7 @@ for OPS-04/05, while the explicitly routed release-check wording drove OPS-06 to
 4/5. This evidence caused the single v5 gameplay-evidence routing bullet. Both
 guards remained 5/5.
 
-### GREEN v5 final results — 30/30 PASS
+### GREEN v5 initial-close results — 30/30 PASS
 
 | Case | Run verdicts | Count |
 |---|---|---:|
@@ -323,24 +324,49 @@ OPS-03 was conservatively rerun on v5 because the new routing bullet names
 integrated player-journey evidence; it remained 5/5. No v5 failure or new
 rationalization was observed, so v5 caused no further wording change.
 
-### Final eight-case score
+### GREEN v6 corrective review closure — 15/15 PASS
+
+Independent review correctly found that OPS-02's original v1 5/5 set predated the
+v2/v3 changes to `references/production-operations.md`. The earlier claim that every
+affected case had been rerun was therefore unsupported for OPS-02. V6 closes that
+gap with the exact final committed skill; no earlier evidence was removed or
+reclassified.
+
+- Source commit: `4ed128b55d861e7c5a368690f1cfc020934035e0`.
+- Isolated skill:
+  `C:\Temp\godot-ops-green-skill-e47b34e8b0b742b6898c42574b450828\godot-game-production`.
+- The same fresh-context, `fork_turns: "none"`, `gpt-5.6-terra` medium,
+  response-only, rubric-withheld protocol was used. The isolated root contained
+  only `godot-game-production`, at most two sessions were active, and no evaluator
+  edited files or reused a prior session.
+
+| Case | Run verdicts | Count |
+|---|---|---:|
+| OPS-02 | `ops_02_green_v6_01` PASS; `ops_02_green_v6_02` PASS; `ops_02_green_v6_03` PASS; `ops_02_green_v6_04` PASS; `ops_02_green_v6_05` PASS | 5/5 |
+| OPS-07 | `ops_07_green_v6_01` PASS; `ops_07_green_v6_02` PASS; `ops_07_green_v6_03` PASS; `ops_07_green_v6_04` PASS; `ops_07_green_v6_05` PASS | 5/5 |
+| OPS-08 | `ops_08_green_v6_01` PASS; `ops_08_green_v6_02` PASS; `ops_08_green_v6_03` PASS; `ops_08_green_v6_04` PASS; `ops_08_green_v6_05` PASS | 5/5 |
+
+V6 observed no failed criterion or new rationalization, so the committed skill
+guidance was not changed.
+
+### Corrected final eight-case latest-set score
 
 | Case | Final passing sample set | Final count |
 |---|---|---:|
 | OPS-01 | GREEN v2 (unchanged by later targeted refinements) | 5/5 |
-| OPS-02 | GREEN v1 (unchanged by every refinement) | 5/5 |
+| OPS-02 | GREEN v6 corrective final | 5/5 |
 | OPS-03 | GREEN v5 | 5/5 |
 | OPS-04 | GREEN v5 | 5/5 |
 | OPS-05 | GREEN v5 | 5/5 |
 | OPS-06 | GREEN v5 | 5/5 |
-| OPS-07 | GREEN v5 guard | 5/5 |
-| OPS-08 | GREEN v5 guard | 5/5 |
+| OPS-07 | GREEN v6 corrective guard | 5/5 |
+| OPS-08 | GREEN v6 corrective guard | 5/5 |
 
-Final result: every mandatory criterion passes five out of five. Every final sample
-set used fresh contexts, the exact isolated skill for its variant, and withheld
-rubrics/expected answers. Later refinements were rerun for every case they could
-affect plus OPS-07 and OPS-08; prior samples were never counted toward a changed
-variant.
+Final result after corrective v6: every mandatory criterion passes five out of five.
+Every latest applicable sample set used fresh contexts, the exact isolated skill for
+its variant, and withheld rubrics/expected answers. The evaluation now contains 175
+GREEN executions. Later refinements were rerun for every case they could affect plus
+OPS-07 and OPS-08; prior samples were never counted toward a changed variant.
 
 ### Structural regression
 
@@ -348,4 +374,6 @@ variant.
   seven passed, the deliberately deferred
   `test_readme_mentions_conditional_operations` assertion failed, and there were
   zero errors. Final line: `FAILED (failures=1)`.
+- `python C:\Users\Ёж\.codex\skills\.system\skill-creator\scripts\quick_validate.py godot-game-production`:
+  exit 0 with `Skill is valid!`.
 - `git diff --check`: exit 0 with no whitespace errors.

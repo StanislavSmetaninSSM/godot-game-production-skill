@@ -68,6 +68,21 @@ they can materially contend for the measured resource. Stop only processes known
 belong to the in-scope project. Processes launched by the current workflow may be
 stopped when safe; pre-existing processes require user confirmation.
 Never terminate unrelated user processes to obtain a clean number.
+For an active-load action plan, classify every competing process as a safe
+project-owned process launched by the current workflow, a pre-existing process, or
+an unrelated user process. State that only the first class may be stopped when safe,
+explicitly request confirmation before stopping the second, and never stop the third;
+waiting for the current jobs to finish does not replace this ownership protocol.
+Write the facet and milestone states separately: the contaminated performance facet
+is `reliability_performance: PENDING`, while the milestone remains non-passing. Use
+an explicit action such as "request user confirmation before stopping this
+pre-existing process"; merely saying confirmation is required is not the request.
+For each pre-existing competing process, include the action `request user
+confirmation before any stop; retain it until confirmed`. Include that action even
+when waiting is currently safest; an active-load plan that only waits or says not to
+stop processes omits the required ownership decision.
+Keep that ownership classification and confirmation action in the submitted final
+answer; an internal note or intermediate message does not satisfy the action plan.
 
 If competing load cannot be safely controlled, changes materially during the run,
 or is not recorded, do not submit the capture. Keep or reopen

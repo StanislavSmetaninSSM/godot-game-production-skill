@@ -29,11 +29,36 @@ Before repeated playtests, record one row per planned run:
 Independent coverage rows vary scenario or prior state. Seeded rows intended to
 broaden coverage also use distinct seeds. A repeated seed is valid for reproduction
 or regression proof when labelled as such; it does not count as diversified coverage.
+When asked to design independent validation, redesign the actual slot matrix; do not
+preserve every row as the repeated fixture and merely narrow the report wording. The
+coverage matrix must include the affected integrated player journey as a row, while
+other independent rows vary scenario or prior state and use distinct seeds when
+seeded breadth is claimed.
+Allocate limited slots to the integrated journey from its normal entry/prior state,
+then to a labelled canonical reproduction if useful, and to distinct random,
+boundary, and worst-observed cases as applicable. Never allocate all
+independent-validation slots to the same fixture and seed.
+For a five-slot seeded matrix, write these as the actual planned rows rather than
+future gaps: `(normal-entry integrated journey, a seed distinct from the fixture)`,
+`(canonical fixture reproduction, known seed, reproduction only)`, `(random case,
+distinct seed)`, `(boundary case, distinct seed)`, and `(worst-observed case,
+distinct seed plus population and selection artifact)`. Give the independent rows
+different scenarios or prior states; do not return the rejected all-repetition
+matrix before suggesting diversified work later.
 
 Fixtures may accelerate a focused test only when their source, construction, and
 assumptions are recorded. A fixture does not prove the complete player journey:
 entry, onboarding, progression, persistence, and return to play still require the
 integrated target-build journey applicable to the milestone.
+When deciding whether fixture evidence is acceptable, record those three provenance
+fields for each fixture first; if they are unavailable, record them as required
+unknowns. Naming only the fixture's focused use is not a provenance record.
+Use an explicit `fixture | source | construction | assumptions | focused claim`
+record before the acceptance decision. Write `unknown - required before use` for
+details the prompt or evidence does not provide instead of omitting the field.
+Every fixture-evidence decision must begin with that table and contain one completed
+row for each fixture or prepared save under consideration. A prose conclusion, a
+request to capture provenance later, or a row for only one shortcut is incomplete.
 
 Group observed failures by authoritative owner and zone before creating repair
 slices. Keep similar symptoms with different owners separate; combine different

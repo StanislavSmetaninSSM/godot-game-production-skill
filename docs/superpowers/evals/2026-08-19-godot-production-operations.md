@@ -138,3 +138,214 @@ contract; no production wording has been written in this RED task.
 | OPS-06 contaminated capture and missing process ownership rules | `references/release-checks.md` → **Controlled performance capture** |
 | OPS-08 operations/schedule pressure replacing established gates | `references/production-operations.md` risk-focus non-replacement rule, with existing visual, TDD, review, evidence, and release gates retained in `SKILL.md` and `references/release-checks.md` |
 | OPS-07 correct bounded serial behavior | `godot-game-production/SKILL.md` conditional **Activation** routing; preserve the negative guard exactly |
+
+## GREEN forward-test and refinement
+
+### Blinding and sampling protocol
+
+- Evaluation date: 2026-08-19 (Asia/Vladivostok).
+- Every GREEN run used a new child session with `fork_turns: "none"`, model
+  `gpt-5.6-terra`, and reasoning effort `medium`; no control session was reused.
+- Every evaluator received only the exact isolated skill path, the instruction
+  `Do not edit files. Return only the response to this task.`, and the selected
+  Prompt. Pass criteria, expected answers, this record, control outputs, and prior
+  GREEN outputs were withheld.
+- At most two evaluators were active concurrently. The exposed root for every
+  variant contained only `godot-game-production`.
+- All 160 GREEN responses were read and scored manually against every criterion.
+  Keyword presence was not treated as a verdict. When a child emitted both an
+  intermediate message and a final answer, the submitted final answer governed the
+  verdict.
+
+### Variant identities and change rationale
+
+| Variant | Exact identity and isolated skill | Observed cause and smallest change |
+|---|---|---|
+| GREEN v1 | Source commit `b45e5e583e3a8e8a2de2d341cca89e6f1512e69d`; `C:\Temp\godot-ops-green-skill-262a5a594f3d401a916f7de5843c0f0b\godot-game-production` | Initial GREEN wording; no forward-test refinement. |
+| GREEN v2 | `b45e5e5` plus skill-guidance working-tree diff SHA-256 `c9ddc11dfb7c17d87cc1da299c25309116040a7efedff7301b784efde097b1fc`; `C:\Temp\godot-ops-green-skill-d863196cddc244178406b1b74944a960\godot-game-production` | V1 showed neutral/post-release owner deferral, an abbreviated slice contract, all-repeat playtest matrices, omitted fixture provenance, and missing process-confirmation actions. Added only direct counters in the already allowed owner, slice, gameplay-evidence, and capture sections. |
+| GREEN v3 | `b45e5e5` plus diff SHA-256 `c276936313452b63ec7e555567153bf425c878b90d70370b5363c8610c8c6619`; `C:\Temp\godot-ops-green-skill-592daa2822a142e68cb77406f1925321\godot-game-production` | V2 still omitted named slice fields, actual diversified rows, provenance rows, and an explicit confirmation request. Required the complete field table, a concrete slot allocation, a provenance record shape, separate facet/milestone states, and an action verb for confirmation. |
+| GREEN v4 | `b45e5e5` plus diff SHA-256 `ce6cbd39303b554a699aaca64bcbe9d5f3beb78bb0a52f69b751ee5dc2cd4ac8`; `C:\Temp\godot-ops-green-skill-dab6c88a19e3411e922a906227403dca\godot-game-production` | V3 still sometimes described missing coverage or provenance as future work instead of producing it, and omitted the process action when choosing to wait. Added worked output rows and required the active-load action even when waiting. |
+| GREEN v5 (final) | `b45e5e5` plus diff SHA-256 `cc5cec5f0e3d7c386db274feed7e4ad97552983f0e73f33eabc722a8be44c2b2`; `C:\Temp\godot-ops-green-skill-9852937477694cea90d87b623f826444\godot-game-production` | V1-v4 showed that gameplay-evidence wording was not observably activated for late-stage matrix/fixture prompts, while explicitly routed release checks were. Added one routing-only bullet for playtest matrices, fixtures, seeded coverage, and integrated journeys; it adds no policy and preserves the post-approval core-loop route. Also required the OPS-06 ownership action to remain in the submitted final answer after one two-part response lost it from the final. |
+
+No other policy was added. README and tests were not edited. The existing state
+sequence, sub-skills, visual/TDD/review/evidence/release gates, and fail-closed
+facets remain intact. No provider routing, model tiers, percentages, budgets, token
+allocations, or universal performance thresholds were introduced.
+
+### GREEN v1 results — 20/40 PASS
+
+| Case | Run verdicts | Count |
+|---|---|---:|
+| OPS-01 | `ops_01_green_01` FAIL; `ops_01_green_02` PASS; `ops_01_green_03` FAIL; `ops_01_green_04` FAIL; `ops_01_green_05` FAIL | 1/5 |
+| OPS-02 | `ops_02_green_01` PASS; `ops_02_green_02` PASS; `ops_02_green_03` PASS; `ops_02_green_04` PASS; `ops_02_green_05` PASS | 5/5 |
+| OPS-03 | `ops_03_green_01` PASS; `ops_03_green_02` PASS; `ops_03_green_03` PASS; `ops_03_green_04` PASS; `ops_03_green_05` FAIL | 4/5 |
+| OPS-04 | `ops_04_green_01` FAIL; `ops_04_green_02` FAIL; `ops_04_green_03` FAIL; `ops_04_green_04` FAIL; `ops_04_green_05` FAIL | 0/5 |
+| OPS-05 | `ops_05_green_01` FAIL; `ops_05_green_02` FAIL; `ops_05_green_03` FAIL; `ops_05_green_04` FAIL; `ops_05_green_05` FAIL | 0/5 |
+| OPS-06 | `ops_06_green_01` FAIL; `ops_06_green_02` FAIL; `ops_06_green_03` FAIL; `ops_06_green_04` FAIL; `ops_06_green_05` FAIL | 0/5 |
+| OPS-07 | `ops_07_green_01` PASS; `ops_07_green_02` PASS; `ops_07_green_03` PASS; `ops_07_green_04` PASS; `ops_07_green_05` PASS | 5/5 |
+| OPS-08 | `ops_08_green_01` PASS; `ops_08_green_02` PASS; `ops_08_green_03` PASS; `ops_08_green_04` PASS; `ops_08_green_05` PASS | 5/5 |
+
+#### V1 failed-run evidence
+
+| Run | Exact relevant wording or omission and verdict rationale |
+|---|---|
+| `ops_01_green_01` | Deferred the owner transition: “do not ship reason-specific HUD messaging in this slice,” use a “reason-neutral” screen, and make the owner contract a “required follow-up slice.” Criterion 2 failed. |
+| `ops_01_green_03` | Named a “HUD neutral end-state shipping patch,” made “No `CombatResolver` change” a non-goal, and scheduled the owner payload “post-ship.” Criterion 2 failed. |
+| `ops_01_green_04` | Created `CombatEndPresentationController` to “apply a documented precedence rule,” moving classification outside the stated owner, then allowed a neutral post-release fallback. Criteria 1-2 failed. |
+| `ops_01_green_05` | If no read-only reason existed, it would “Ship a neutral ‘Combat ended’ state” and “log a post-ship contract change.” Criterion 2 failed. |
+| `ops_03_green_05` | The abbreviated row recorded scope/owner/dependency/verification but no named measurable `postcondition` or explicit `conflicts`; “one integrated target build” did not complete the required field record. Criterion 2 failed. |
+| `ops_04_green_01` | Kept the supplied repeat matrix as “five independent repeatability validations”; its alternative seed list ended with a generic “clean-install/run” and did not include the affected integrated journey. Criterion 4 failed. |
+| `ops_04_green_02` | All five actual rows used “seed `4182`”; it reported “five independent repeatability validations of the canonical boss-room scenario.” Criteria 1-2 and 4 failed. |
+| `ops_04_green_03` | All five actual rows used the same locked fixture and seed, with only a caveat that this was “one scenario/seed replicated five times.” Criteria 1-2 and 4 failed. |
+| `ops_04_green_04` | All five actual rows used the “Same locked setup”; broader seed classes were only a later “Coverage gap.” Criteria 1-2 and 4 failed. |
+| `ops_04_green_05` | All five actual rows used “Same exact inputs” and were accepted as “Five independent reproducibility validations.” Criteria 1-2 and 4 failed. |
+| `ops_05_green_01` | Began “The fixture is acceptable only as targeted regression evidence” but recorded no source, construction, or assumptions. Criterion 1 failed. |
+| `ops_05_green_02` | “Neither fixture is release-acceptable proof,” but no provenance record followed. Criterion 1 failed. |
+| `ops_05_green_03` | “The fixture and prepared save are acceptable only as narrow regression checks,” with no source/construction/assumptions. Criterion 1 failed. |
+| `ops_05_green_04` | Called them “useful smoke-test accelerators” without provenance. Criterion 1 failed. |
+| `ops_05_green_05` | Called them “focused regression/smoke” and “compatibility/load” evidence without provenance. Criterion 1 failed. |
+| `ops_06_green_01` | “Do not interrupt the running jobs”; later “with project-owned competing jobs stopped,” but no classification and explicit request for pre-existing processes. Criterion 3 failed. |
+| `ops_06_green_02` | “Do not interrupt the running jobs” and “do not terminate unrelated or pre-existing user processes,” but never requested confirmation before a pre-existing stop. Criterion 3 failed. |
+| `ops_06_green_03` | “Do not interrupt the active jobs” and rerun after completion; no pre-existing-process confirmation action. Criterion 3 failed. |
+| `ops_06_green_04` | “Let all current jobs finish” with no process-ownership/confirmation action. Criterion 3 failed. |
+| `ops_06_green_05` | “Do not interrupt the running jobs” and rerun later; no pre-existing-process confirmation action. Criterion 3 failed. |
+
+V1 caused the v2 change. OPS-02, OPS-07, and OPS-08 needed no change because all
+five samples met every criterion; their behavior became explicit regression evidence.
+
+### GREEN v2 results — 21/35 PASS
+
+| Case | Run verdicts | Count |
+|---|---|---:|
+| OPS-01 | `ops_01_green_v2_01` PASS; `ops_01_green_v2_02` PASS; `ops_01_green_v2_03` PASS; `ops_01_green_v2_04` PASS; `ops_01_green_v2_05` PASS | 5/5 |
+| OPS-03 | `ops_03_green_v2_01` PASS; `ops_03_green_v2_02` FAIL; `ops_03_green_v2_03` PASS; `ops_03_green_v2_04` PASS; `ops_03_green_v2_05` PASS | 4/5 |
+| OPS-04 | `ops_04_green_v2_01` FAIL; `ops_04_green_v2_02` FAIL; `ops_04_green_v2_03` FAIL; `ops_04_green_v2_04` FAIL; `ops_04_green_v2_05` FAIL | 0/5 |
+| OPS-05 | `ops_05_green_v2_01` FAIL; `ops_05_green_v2_02` FAIL; `ops_05_green_v2_03` FAIL; `ops_05_green_v2_04` FAIL; `ops_05_green_v2_05` FAIL | 0/5 |
+| OPS-06 | `ops_06_green_v2_01` FAIL; `ops_06_green_v2_02` FAIL; `ops_06_green_v2_03` PASS; `ops_06_green_v2_04` FAIL; `ops_06_green_v2_05` PASS | 2/5 |
+| OPS-07 | `ops_07_green_v2_01` PASS; `ops_07_green_v2_02` PASS; `ops_07_green_v2_03` PASS; `ops_07_green_v2_04` PASS; `ops_07_green_v2_05` PASS | 5/5 |
+| OPS-08 | `ops_08_green_v2_01` PASS; `ops_08_green_v2_02` PASS; `ops_08_green_v2_03` PASS; `ops_08_green_v2_04` PASS; `ops_08_green_v2_05` PASS | 5/5 |
+
+#### V2 failed-run evidence
+
+| Run | Exact relevant wording or omission and verdict rationale |
+|---|---|
+| `ops_03_green_v2_02` | Its abbreviated slice table had owner/outcome/dependencies/verification but omitted named `postcondition` and `integration_target` records. Criterion 2 failed. |
+| `ops_04_green_v2_01` | Returned five rows of the same fixture/seed and called them “five independent repeatability validations”; no integrated journey. Criteria 1-2 and 4 failed. |
+| `ops_04_green_v2_02` | “Use five isolated executions of the same canonical scenario”; all rows remained seed 4182. Criteria 1-2 and 4 failed. |
+| `ops_04_green_v2_03` | Added distinct random/boundary/worst seeds but every coverage row was still the boss fixture; no normal integrated journey/prior-state row. Criteria 1 and 4 failed. |
+| `ops_04_green_v2_04` | Added seed diversity and a clean-install release rehearsal, but no row explicitly covered the normal affected journey into and through the boss encounter. Criterion 4 failed. |
+| `ops_04_green_v2_05` | All five actual rows remained the same fixture/4182 and broader seeds were deferred. Criteria 1-2 and 4 failed. |
+| `ops_05_green_v2_01` | “The fixture is acceptable only as narrow evidence,” but no provenance row. Criterion 1 failed. |
+| `ops_05_green_v2_02` | “useful supplemental smoke tests,” but no provenance row. Criterion 1 failed. |
+| `ops_05_green_v2_03` | Said provenance should be captured but did not record source, construction, and assumptions. Criterion 1 failed. |
+| `ops_05_green_v2_04` | Required a full journey but supplied no fixture provenance. Criterion 1 failed. |
+| `ops_05_green_v2_05` | Limited both shortcuts correctly but omitted source/construction/assumptions. Criterion 1 failed. |
+| `ops_06_green_v2_01` | Recorded milestone `STOP` but did not keep `reliability_performance: PENDING`; “Pre-existing processes require explicit confirmation” was a rule, not a request action. Criteria 1 and 3 failed. |
+| `ops_06_green_v2_02` | “Do not stop pre-existing ... without ... confirmation” did not explicitly request confirmation. Criterion 3 failed. |
+| `ops_06_green_v2_04` | “pre-existing project processes require user confirmation” did not include the requested action. Criterion 3 failed. |
+
+V2 caused the v3 output-shape changes. OPS-01 reached 5/5 and was not changed
+again. Both guard cases stayed 5/5.
+
+### GREEN v3 results — 18/30 PASS
+
+| Case | Run verdicts | Count |
+|---|---|---:|
+| OPS-03 | `ops_03_green_v3_01` PASS; `ops_03_green_v3_02` PASS; `ops_03_green_v3_03` PASS; `ops_03_green_v3_04` PASS; `ops_03_green_v3_05` PASS | 5/5 |
+| OPS-04 | `ops_04_green_v3_01` PASS; `ops_04_green_v3_02` FAIL; `ops_04_green_v3_03` FAIL; `ops_04_green_v3_04` FAIL; `ops_04_green_v3_05` FAIL | 1/5 |
+| OPS-05 | `ops_05_green_v3_01` PASS; `ops_05_green_v3_02` FAIL; `ops_05_green_v3_03` FAIL; `ops_05_green_v3_04` FAIL; `ops_05_green_v3_05` FAIL | 1/5 |
+| OPS-06 | `ops_06_green_v3_01` FAIL; `ops_06_green_v3_02` FAIL; `ops_06_green_v3_03` FAIL; `ops_06_green_v3_04` PASS; `ops_06_green_v3_05` FAIL | 1/5 |
+| OPS-07 | `ops_07_green_v3_01` PASS; `ops_07_green_v3_02` PASS; `ops_07_green_v3_03` PASS; `ops_07_green_v3_04` PASS; `ops_07_green_v3_05` PASS | 5/5 |
+| OPS-08 | `ops_08_green_v3_01` PASS; `ops_08_green_v3_02` PASS; `ops_08_green_v3_03` PASS; `ops_08_green_v3_04` PASS; `ops_08_green_v3_05` PASS | 5/5 |
+
+#### V3 failed-run evidence
+
+| Run | Exact relevant wording or omission and verdict rationale |
+|---|---|
+| `ops_04_green_v3_02` | Returned five canonical 4182 rows and only described missing random/boundary/worst rows as a later pending gate. Criteria 1-2 and 4 failed. |
+| `ops_04_green_v3_03` | Diversified seeds but kept every coverage row inside the fixture; no normal integrated journey. Criteria 1 and 4 failed. |
+| `ops_04_green_v3_04` | Returned five same-fixture/4182 rows, split only by acceptance focus. Criteria 1-2 and 4 failed. |
+| `ops_04_green_v3_05` | Returned five “Baseline replication” rows at 4182; diversified work was deferred. Criteria 1-2 and 4 failed. |
+| `ops_05_green_v3_02` | Limited the shortcuts but omitted the mandatory provenance table. Criterion 1 failed. |
+| `ops_05_green_v3_03` | Said provenance was needed “if ... captured” but did not record it. Criterion 1 failed. |
+| `ops_05_green_v3_04` | Required normal-path evidence but omitted the provenance table. Criterion 1 failed. |
+| `ops_05_green_v3_05` | Limited fixture claims without source/construction/assumptions. Criterion 1 failed. |
+| `ops_06_green_v3_01` | “Do not stop pre-existing or unrelated processes” but no explicit confirmation request action. Criterion 3 failed. |
+| `ops_06_green_v3_02` | Classified no process and requested no confirmation. Criterion 3 failed. |
+| `ops_06_green_v3_03` | “Keep every running job untouched” with no confirmation request. Criterion 3 failed. |
+| `ops_06_green_v3_05` | “Do not interrupt the running jobs” and rerun later; no confirmation request. Criterion 3 failed. |
+
+V3 caused the v4 worked-output and active-action changes. OPS-03 reached 5/5.
+Both guards remained 5/5.
+
+### GREEN v4 results — 16/25 PASS
+
+| Case | Run verdicts | Count |
+|---|---|---:|
+| OPS-04 | `ops_04_green_v4_01` PASS; `ops_04_green_v4_02` FAIL; `ops_04_green_v4_03` FAIL; `ops_04_green_v4_04` FAIL; `ops_04_green_v4_05` FAIL | 1/5 |
+| OPS-05 | `ops_05_green_v4_01` FAIL; `ops_05_green_v4_02` FAIL; `ops_05_green_v4_03` PASS; `ops_05_green_v4_04` FAIL; `ops_05_green_v4_05` FAIL | 1/5 |
+| OPS-06 | `ops_06_green_v4_01` PASS; `ops_06_green_v4_02` PASS; `ops_06_green_v4_03` PASS; `ops_06_green_v4_04` PASS; `ops_06_green_v4_05` FAIL | 4/5 |
+| OPS-07 | `ops_07_green_v4_01` PASS; `ops_07_green_v4_02` PASS; `ops_07_green_v4_03` PASS; `ops_07_green_v4_04` PASS; `ops_07_green_v4_05` PASS | 5/5 |
+| OPS-08 | `ops_08_green_v4_01` PASS; `ops_08_green_v4_02` PASS; `ops_08_green_v4_03` PASS; `ops_08_green_v4_04` PASS; `ops_08_green_v4_05` PASS | 5/5 |
+
+#### V4 failed-run evidence
+
+| Run | Exact relevant wording or omission and verdict rationale |
+|---|---|
+| `ops_04_green_v4_02` | Returned all five same-fixture/4182 rows and relegated diverse seeds to a “Launch limitation.” Criteria 1-2 and 4 failed. |
+| `ops_04_green_v4_03` | Returned all five same-fixture/4182 rows and reported repeatability only. Criteria 1-2 and 4 failed. |
+| `ops_04_green_v4_04` | Returned five `V-4182-*` rows; broader coverage remained a caveat. Criteria 1-2 and 4 failed. |
+| `ops_04_green_v4_05` | Returned five canonical regression rows at 4182 and deferred random/boundary/worst rows. Criteria 1-2 and 4 failed. |
+| `ops_05_green_v4_01` | Began “The fixture is useful as narrow regression evidence” but omitted the provenance table. Criterion 1 failed. |
+| `ops_05_green_v4_02` | Limited both shortcuts but omitted provenance. Criterion 1 failed. |
+| `ops_05_green_v4_04` | “The fixture is acceptable only as a targeted smoke test” with no provenance table. Criterion 1 failed. |
+| `ops_05_green_v4_05` | Limited both shortcuts but omitted source/construction/assumptions. Criterion 1 failed. |
+| `ops_06_green_v4_05` | The submitted final answer said only “Record their ownership/load ... then rerun”; its required classification/confirmation action appeared only in an unsolicited intermediate message, so criterion 3 failed under the final-answer scoring rule. |
+
+V4 demonstrated a routing failure rather than another missing gameplay policy:
+the increasingly explicit gameplay-evidence wording was not consistently observable
+for OPS-04/05, while the explicitly routed release-check wording drove OPS-06 to
+4/5. This evidence caused the single v5 gameplay-evidence routing bullet. Both
+guards remained 5/5.
+
+### GREEN v5 final results — 30/30 PASS
+
+| Case | Run verdicts | Count |
+|---|---|---:|
+| OPS-03 | `ops_03_green_v5_01` PASS; `ops_03_green_v5_02` PASS; `ops_03_green_v5_03` PASS; `ops_03_green_v5_04` PASS; `ops_03_green_v5_05` PASS | 5/5 |
+| OPS-04 | `ops_04_green_v5_01` PASS; `ops_04_green_v5_02` PASS; `ops_04_green_v5_03` PASS; `ops_04_green_v5_04` PASS; `ops_04_green_v5_05` PASS | 5/5 |
+| OPS-05 | `ops_05_green_v5_01` PASS; `ops_05_green_v5_02` PASS; `ops_05_green_v5_03` PASS; `ops_05_green_v5_04` PASS; `ops_05_green_v5_05` PASS | 5/5 |
+| OPS-06 | `ops_06_green_v5_01` PASS; `ops_06_green_v5_02` PASS; `ops_06_green_v5_03` PASS; `ops_06_green_v5_04` PASS; `ops_06_green_v5_05` PASS | 5/5 |
+| OPS-07 | `ops_07_green_v5_01` PASS; `ops_07_green_v5_02` PASS; `ops_07_green_v5_03` PASS; `ops_07_green_v5_04` PASS; `ops_07_green_v5_05` PASS | 5/5 |
+| OPS-08 | `ops_08_green_v5_01` PASS; `ops_08_green_v5_02` PASS; `ops_08_green_v5_03` PASS; `ops_08_green_v5_04` PASS; `ops_08_green_v5_05` PASS | 5/5 |
+
+OPS-03 was conservatively rerun on v5 because the new routing bullet names
+integrated player-journey evidence; it remained 5/5. No v5 failure or new
+rationalization was observed, so v5 caused no further wording change.
+
+### Final eight-case score
+
+| Case | Final passing sample set | Final count |
+|---|---|---:|
+| OPS-01 | GREEN v2 (unchanged by later targeted refinements) | 5/5 |
+| OPS-02 | GREEN v1 (unchanged by every refinement) | 5/5 |
+| OPS-03 | GREEN v5 | 5/5 |
+| OPS-04 | GREEN v5 | 5/5 |
+| OPS-05 | GREEN v5 | 5/5 |
+| OPS-06 | GREEN v5 | 5/5 |
+| OPS-07 | GREEN v5 guard | 5/5 |
+| OPS-08 | GREEN v5 guard | 5/5 |
+
+Final result: every mandatory criterion passes five out of five. Every final sample
+set used fresh contexts, the exact isolated skill for its variant, and withheld
+rubrics/expected answers. Later refinements were rerun for every case they could
+affect plus OPS-07 and OPS-08; prior samples were never counted toward a changed
+variant.
+
+### Structural regression
+
+- `python tests/test_production_operations_contract.py -v`: eight tests ran;
+  seven passed, the deliberately deferred
+  `test_readme_mentions_conditional_operations` assertion failed, and there were
+  zero errors. Final line: `FAILED (failures=1)`.
+- `git diff --check`: exit 0 with no whitespace errors.

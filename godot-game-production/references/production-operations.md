@@ -59,6 +59,12 @@ begins:
 Derive the postcondition from the specification, target hardware, or measured
 baseline. Never invent a universal percentage, weight, or score.
 
+A production plan must write every applicable field above for each genuine slice.
+Calling related edits one coherent slice does not replace its `baseline`, measurable
+`postcondition`, `conflicts`, `verification`, or `integration_target` records.
+Use the complete field table for the plan; an abbreviated scope/dependency summary
+that omits any of those named records is not a completed slice contract.
+
 ## Group and sequence work
 
 Group changes that share an owner, setup, runtime journey, or evidence capture. Split

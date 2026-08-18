@@ -52,6 +52,32 @@ rationale, and every unresolved blocker:
 `PIVOT` and `STOP` are non-passing. `PENDING`, `BLOCKED`, a builder-authored PASS,
 or a ledger path is not milestone acceptance.
 
+## Controlled performance capture
+
+For every performance run, record:
+
+- exact candidate, Godot version, export profile, target hardware, and environment;
+- available CPU, GPU, memory, thermal, and power state;
+- foreground and background load before and during capture;
+- project-owned editor, import, build, test, capture, and browser-test processes
+  stopped or intentionally retained; and
+- measurement command, duration, scenario, seed, raw artifact, and budget source.
+
+Heavy build, import, browser-test, and performance-capture jobs must not overlap when
+they can materially contend for the measured resource. Stop only processes known to
+belong to the in-scope project. Processes launched by the current workflow may be
+stopped when safe; pre-existing processes require user confirmation.
+Never terminate unrelated user processes to obtain a clean number.
+
+If competing load cannot be safely controlled, changes materially during the run,
+or is not recorded, do not submit the capture. Keep or reopen
+`reliability_performance` as `PENDING` and repeat under a controlled environment.
+Contaminated data cannot support a milestone or release pass; it may diagnose a
+problem only.
+
+Derive budgets from the requirement and declared target hardware. Do not import a
+universal threshold from another project.
+
 ## Runtime and release proof
 
 Before release, capture all of the following for the exact candidate:

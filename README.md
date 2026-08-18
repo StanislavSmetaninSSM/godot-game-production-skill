@@ -12,6 +12,11 @@ Important: screenshots are design evidence only. They never prove mechanics. Mec
 
 No showcase game, sample project, templates, or Godot assets are bundled in this repository.
 
+For concurrent production work, the skill conditionally loads
+`references/production-operations.md` to keep one authoritative owner per mutable
+game fact, define measurable conflict-aware slices, and verify their integrated
+candidate. A single bounded serial slice keeps the normal lighter routing.
+
 ## Prerequisites
 
 - Codex with skill loading enabled.

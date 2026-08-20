@@ -1,0 +1,222 @@
+import sys
+import unittest
+from pathlib import Path
+
+
+ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT / "godot-game-production" / "scripts"))
+
+import visual_contract  # noqa: E402
+
+
+def read(relative_path: str) -> str:
+    return (ROOT / relative_path).read_text(encoding="utf-8")
+
+
+def assert_contains_all(
+    case: unittest.TestCase, text: str, required: tuple[str, ...]
+) -> None:
+    for value in required:
+        case.assertIn(value, text, f"missing required contract text: {value}")
+
+
+class DynamicVisualReferenceContractTests(unittest.TestCase):
+    def test_main_skill_requires_decision_validation_before_scope_question(self) -> None:
+        text = read("godot-game-production/SKILL.md")
+        ordered = (
+            "visual-decision/v1",
+            "check-decision",
+            "VALID_PENDING",
+            "Do you exactly approve the proposed reference slot ID set?",
+        )
+        assert_contains_all(self, text, ordered)
+        self.assertEqual(
+            [text.index(value) for value in ordered],
+            sorted(text.index(value) for value in ordered),
+        )
+
+    def test_main_skill_serializes_pending_scope_decision_for_scorer(self) -> None:
+        text = read("godot-game-production/SKILL.md")
+        required = (
+            "exactly one complete validated `visual-decision/v1` object",
+            "`json` fenced code block",
+            "as the final line",
+            "Prose summary cannot substitute",
+        )
+        assert_contains_all(self, text, required)
+        self.assertLess(
+            text.index("exactly one complete validated `visual-decision/v1` object"),
+            text.index("Do you exactly approve the proposed reference slot ID set?"),
+        )
+
+    def test_main_skill_preserves_pending_decision_when_refusing_requests(self) -> None:
+        text = read("godot-game-production/SKILL.md")
+        required = (
+            "premature or scope-invalid request for a pending `initial_scope` or `delta_scope`",
+            "same response must continue this gate with its complete validated fenced decision and canonical scope question",
+            "never refusal-only prose",
+            "`reference_not_proof` remains a fenced refusal decision without a scope question",
+        )
+        assert_contains_all(self, text, required)
+        self.assertLess(
+            text.index("premature or scope-invalid request for a pending `initial_scope` or `delta_scope`"),
+            text.index("After the user's exact full-set approval"),
+        )
+
+    def test_main_skill_requires_canonical_schema_before_pending_serialization(self) -> None:
+        text = read("godot-game-production/SKILL.md")
+        required = (
+            "Before emitting any pending `visual-decision/v1`",
+            "read `references/visual-contract.md` and `references/evidence-ledger.md` in the current turn",
+            "exact complete `visual-decision/v1` schema in `references/visual-contract.md`",
+            "abbreviated, invented aliases, and short objects are invalid",
+        )
+        assert_contains_all(self, text, required)
+        self.assertLess(
+            text.index("Before emitting any pending `visual-decision/v1`"),
+            text.index("Derive a needs-based initial or delta row set"),
+        )
+
+    def test_main_skill_exempts_reference_not_proof_from_scope_question(self) -> None:
+        text = read("godot-game-production/SKILL.md")
+        assert_contains_all(
+            self,
+            text,
+            (
+                "pending `initial_scope` or `delta_scope` decisions",
+                "`reference_not_proof` emits its complete fenced decision",
+                "does not ask the scope question",
+            ),
+        )
+
+    def test_main_skill_requires_authorization_before_imagegen(self) -> None:
+        text = read("godot-game-production/SKILL.md")
+        ordered = (
+            "visual-scope-approval/v1",
+            "authorize-generation",
+            "visual-generation-authorization/v1",
+            "AUTHORIZED",
+            "ImageGen",
+        )
+        assert_contains_all(self, text, ordered)
+        self.assertEqual(
+            [text.index(value) for value in ordered],
+            sorted(text.index(value) for value in ordered),
+        )
+
+    def test_main_skill_binds_generated_rows_to_authorization(self) -> None:
+        text = read("godot-game-production/SKILL.md")
+        assert_contains_all(
+            self,
+            text,
+            (
+                "one call for every authorized slot",
+                "authorization_id",
+                "target_gameplay_image",
+                "rejected_target_image",
+                "cannot validate or enter an approved visual contract",
+            ),
+        )
+
+    def test_main_skill_requires_fresh_correction_authorization(self) -> None:
+        text = read("godot-game-production/SKILL.md")
+        assert_contains_all(
+            self,
+            text,
+            (
+                "User rejection consumes the old authorization",
+                "visual-correction-approval/v1",
+                "correction form of `authorize-generation`",
+                "exactly one replacement result for that slot",
+            ),
+        )
+
+    def test_visual_contract_documents_all_machine_schemas(self) -> None:
+        text = read("godot-game-production/references/visual-contract.md")
+        assert_contains_all(
+            self,
+            text,
+            (
+                "visual-decision/v1",
+                "visual-decision-report/v1",
+                "visual-scope-approval/v1",
+                "visual-correction-approval/v1",
+                "visual-generation-authorization/v1",
+                "Exit code `0`",
+                "Exit code `2`",
+                "Exit code `3`",
+                "Do you exactly approve the proposed reference slot ID set?",
+                "Do you exactly approve the displayed target ID set?",
+            ),
+        )
+
+    def test_visual_contract_enumerates_canonical_proof_gates_in_order(self) -> None:
+        text = read("godot-game-production/references/visual-contract.md")
+        marker = "The exact ordered canonical proof gates are:"
+        self.assertIn(marker, text)
+        proof_section = text[text.index(marker):]
+        expected = tuple(
+            f"- `{gate}`" for gate in visual_contract.CANONICAL_PROOF_GATES
+        )
+        assert_contains_all(self, proof_section, expected)
+        self.assertEqual(
+            [proof_section.index(gate) for gate in expected],
+            sorted(proof_section.index(gate) for gate in expected),
+        )
+
+    def test_evidence_ledger_resolves_all_visual_source_arrays(self) -> None:
+        text = read("godot-game-production/references/evidence-ledger.md")
+        assert_contains_all(
+            self,
+            text,
+            (
+                "visual_decisions",
+                "visual_scope_approvals",
+                "visual_correction_approvals",
+                "visual_generation_authorizations",
+                "docs/evidence/visual/decisions/<decision-id>.json",
+                "byte-for-byte",
+                "authorization_id",
+                "complete authorized candidate batch",
+                "evidence-run/v1",
+                "no compatibility reader",
+            ),
+        )
+
+    def test_readme_describes_dynamic_authorized_batches(self) -> None:
+        text = read("README.md")
+        assert_contains_all(
+            self,
+            text,
+            (
+                "needs-derived",
+                "complete slot set",
+                "exact batch authorization",
+                "one authorized row budgets one generated result",
+                "late visual delta",
+                "fresh authorization",
+                "unauthorized raw output cannot enter verified evidence",
+            ),
+        )
+
+    def test_atomic_prose_workaround_is_removed(self) -> None:
+        text = read("godot-game-production/SKILL.md")
+        for banned in (
+            "atomic final-response validity gates",
+            "OUTPUT NOW",
+            "Current-answer fallback order",
+            "A collective phrase, paraphrase, merged item",
+        ):
+            self.assertNotIn(banned, text)
+        assert_contains_all(
+            self,
+            text,
+            (
+                "tests/behavioral/score_dynamic_visual_reference.py",
+                "scripts/visual_gate.py",
+            ),
+        )
+
+
+if __name__ == "__main__":
+    unittest.main()

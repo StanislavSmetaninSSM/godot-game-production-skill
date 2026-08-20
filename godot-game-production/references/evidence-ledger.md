@@ -7,49 +7,83 @@ python scripts/evidence_run.py init --project-root <root> --manifest <root>/evid
 python scripts/evidence_run.py validate --project-root <root> --manifest <root>/evidence-run.json --report <root>/evidence-report.json --strict
 ```
 
-The manifest always contains these independent facets:
+The manifest schema is `evidence-run/v2`. It has four visual source arrays:
+`visual_decisions`, `visual_scope_approvals`, `visual_correction_approvals`, and
+`visual_generation_authorizations`, plus `reference_plans`,
+`visual_contract_versions`, and `active_visual_contract_id`. There is no
+`evidence-run/v1` compatibility reader and no compatibility reader of another kind.
 
-`core_play, systems_holism, content, visual, audio_feedback, ux_onboarding, reliability_performance, ship`
+## Store and resolve sources
 
-Use `PENDING` before evidence exists. Use `SUBMITTED` only when its exact artifact
-and review IDs are ready. `SUBMITTED` requests validation; it never declares PASS.
-Never write `PASS` or `BLOCKED` as input. A declared `FAILED`, `PIVOT`, or `STOP`
-remains non-passing. JSON object keys must be unique at every depth; contradictory
-duplicate keys make the manifest invalid instead of allowing a last-value override.
+Use these recommended project-relative paths:
 
-## Integrity and approval
+```text
+docs/evidence/visual/decisions/<decision-id>.json
+docs/evidence/visual/approvals/<approval-id>.json
+docs/evidence/visual/authorizations/<authorization-id>.json
+docs/evidence/visual/reports/<report-id>.json
+```
 
-Keep every artifact at a project-relative path with its recomputed lowercase
-SHA-256. Path traversal, symlink escape, missing files, and SHA-256 drift fail.
-A report may replace only an existing `evidence-report/v1` JSON report; it must
-never alias the manifest, `project.godot`, evidence, or an approved target. For
-visual approval, bind the complete `(target_id, sha256, path)` set after copying
-targets into the versioned project contract directory. The approval `contract_id`
-must exactly equal that directory's `vc-*` version and `recorded_at` must be a
-timezone-aware ISO-8601 timestamp. Require canonical Godot
-captures for every approved target; ImageGen or source-render substitutes fail.
+Angle brackets are metavariables, not literal filenames. Before a project exists,
+the same objects may be in task-local scratch storage. Copy them byte-for-byte into
+the project before final manifest resolution. The manifest resolves source objects
+by exact IDs and validates their byte-equivalent canonical bindings: decision,
+plan-without-approval, scope approval, and authorization hashes must all agree.
+The same source object may not be rewritten under a new meaning.
 
-Reviews must cover the exact facet evidence set and refer to immutable review
-records. Reference every review exactly once from its declared facet; an orphan,
-duplicate reference, or any explicit rejection fails the candidate. Keep the
-visual user and cold-player UX reviewer IDs distinct from the
-builder. This is a literal bookkeeping check, not proof that two IDs are different
-people.
+## Authoring order
 
-For every seeded procedural system, include canonical, random, boundary, and
-worst_observed cases. Bind the worst-observed case to its population artifact and
-selection method. Every case needs its exact seed and a typed Godot procedural output;
-all four classes require distinct seeds and distinct outputs, so aliases do not
-count. The population
-record is distinct from the selected worst output. Never omit a bad class because
-another seed looks good.
+1. Add the pending decision to `visual_decisions` and its matching plan to
+   `reference_plans`; both have `approval: null`.
+2. Validate the decision, collect exact full-set scope approval, and add the
+   immutable `visual-scope-approval/v1` record to `visual_scope_approvals`.
+3. Run authorization and add the immutable
+   `visual-generation-authorization/v1` record to
+   `visual_generation_authorizations`. A decision, plan, scope approval, and
+   authorization must resolve as one chain.
+4. For every generated PNG, add one `target_gameplay_image` artifact with the
+   exact authorization `authorization_id`, target ID, reference slot ID, plan ID,
+   plan revision, aware `generated_at`, project-relative path, SHA-256, coverage,
+   and `imagegen_target` provenance.
+5. Assemble the complete authorized candidate batch, then record target approval
+   on its contract version. Only after that approval may the manifest set the
+   active visual contract ID.
 
-For `VERIFIED`, require non-empty Godot version and target hardware and bind the
-game build ID to the exact ship-facet release artifact. Artifact kinds must use
-their allowlisted runtime, trace, build, environment, ImageGen, or review
-provenance; a label from the wrong provenance fails.
+Validation requires scope approval before authorization, authorization before each
+target generation, and target generation before target approval. An authorization
+must have exactly one generated result for every authorized slot, no other slot,
+and no result above its budget. Initial authorization covers the full initial plan;
+delta authorization covers only its add/replace batch. The active contract is the
+linear base chain plus additions minus explicit supersessions.
 
-Exit `0` means structurally VERIFIED, `1` PENDING, `2` FAILED, and `3` invalid input.
-The report derives these states without a score or average. It proves local shape
-and bytes only; it does not prove provenance truth, human identity, artistic quality,
-fun, or shipping readiness.
+## Rejection and correction
+
+On rejection, preserve the generated bytes and reclassify its artifact as
+`rejected_target_image`. Keep its target ID, slot ID, path, SHA-256, coverage,
+`generated_at`, plan ID, and plan revision; add aware `rejected_at`,
+`rejection_artifact_id`, and `rejection_reviewer_id`. Its `authorization_id` still
+resolves to the consumed authorization. A rejected target cannot be adopted into a
+visual-contract mapping or reused as a target ID.
+
+Add the distinct `visual-correction-approval/v1` record to
+`visual_correction_approvals` after rejection. A correction authorization names the
+rejected target and contains only that slot. It permits exactly one replacement
+result with a fresh target ID and non-overwriting path. A second retry repeats this
+approval-and-authorization cycle. A user rejection alone never authorizes a retry.
+
+## Failure states and trust boundary
+
+Use `PENDING` before evidence exists and `SUBMITTED` only for a complete candidate
+requesting validation. Never write `PASS` or `BLOCKED` as input; `FAILED`, `PIVOT`,
+and `STOP` are non-passing. The validator exits `0` for structurally VERIFIED, `1`
+for PENDING, `2` for FAILED, and `3` for invalid input.
+
+Path traversal, symlink escape, missing files, duplicate IDs, hash drift, invalid
+base chains, branch/cycle bases, missing source resolution, timestamp inversion,
+unbound artifacts, partial batches, or approval of an incomplete batch fail. The
+gate cannot prevent platform delivery of raw ImageGen bytes, but unbound bytes
+cannot enter verified evidence or release status.
+
+Retain inside-root, SHA-256, Godot-runtime capture, independent review, and
+target-Godot input/state/outcome rules. A screenshot is design evidence, never
+mechanics or release proof.

@@ -12,6 +12,8 @@ from datetime import datetime
 from pathlib import Path
 from typing import Sequence
 
+import visual_contract
+
 
 FACETS = (
     "core_play",
@@ -26,6 +28,7 @@ FACETS = (
 
 KIND_PROVENANCES = {
     "target_gameplay_image": {"imagegen_target"},
+    "rejected_target_image": {"imagegen_target"},
     "canonical_godot_capture": {"godot_runtime"},
     "input_trace": {"input_trace"},
     "state_transition_trace": {"state_trace"},
@@ -79,6 +82,38 @@ REQUIRED_KINDS = {
     "ship": {"release_build", "clean_install_record", "save_restart_capture"},
 }
 HEX = set("0123456789abcdef")
+APPROVAL_FIELDS = {
+    "approval_artifact_id", "reviewer_id", "decision", "recorded_at",
+    "binding_sha256",
+}
+REJECTED_TARGET_FIELDS = {
+    "id",
+    "kind",
+    "provenance",
+    "path",
+    "sha256",
+    "media_type",
+    "target_id",
+    "reference_slot_id",
+    "coverage",
+    "generated_at",
+    "plan_id",
+    "plan_revision",
+    "rejected_at",
+    "rejection_artifact_id",
+    "rejection_reviewer_id",
+    "authorization_id",
+}
+VISUAL_CONTRACT_FIELDS = {
+    "contract_id", "base_contract_id", "plan_id", "plan_revision",
+    "targets", "approval",
+}
+VISUAL_TARGET_FIELDS = {
+    "reference_slot_id", "target_id", "artifact_id", "sha256", "path"
+}
+TARGET_KINDS = {
+    "location", "gameplay_state", "ui_mode", "character", "asset_family"
+}
 
 
 class SchemaError(ValueError):
@@ -118,7 +153,7 @@ def _manifest_template(
     *, builder_id: str, dimension: str, procedural_mode: str
 ) -> dict[str, object]:
     return {
-        "schema_version": "evidence-run/v1",
+        "schema_version": "evidence-run/v2",
         "run_id": str(uuid.uuid4()),
         "project_root": ".",
         "builder_id": builder_id,
@@ -129,7 +164,13 @@ def _manifest_template(
             "target_hardware": "",
         },
         "artifacts": [],
-        "approved_visual_contract": None,
+        "reference_plans": [],
+        "visual_decisions": [],
+        "visual_scope_approvals": [],
+        "visual_correction_approvals": [],
+        "visual_generation_authorizations": [],
+        "visual_contract_versions": [],
+        "active_visual_contract_id": None,
         "facets": {
             name: {"intent": "PENDING", "evidence_ids": [], "review_ids": []}
             for name in FACETS
@@ -171,28 +212,65 @@ def _is_sha256(value: object) -> bool:
     )
 
 
-def _unique_object(pairs: list[tuple[str, object]]) -> dict[str, object]:
-    value: dict[str, object] = {}
-    for key, item in pairs:
-        if key in value:
-            raise SchemaError(f"duplicate JSON key: {key}")
-        value[key] = item
-    return value
+def _require_text(value: object, label: str) -> None:
+    _require(isinstance(value, str) and bool(value.strip()), f"{label} is empty")
 
 
-def _loads_json(text: str) -> object:
-    return json.loads(text, object_pairs_hook=_unique_object)
+def _validate_approval_schema(value: object, label: str) -> None:
+    if value is None:
+        return
+    _require(
+        isinstance(value, dict) and set(value) == APPROVAL_FIELDS,
+        f"{label} fields differ",
+    )
+    for field in ("approval_artifact_id", "reviewer_id", "recorded_at"):
+        _require_text(value[field], f"{label} {field}")
+    _require(value["decision"] in {"approved", "rejected"}, f"{label} decision is unknown")
+    _require(
+        visual_contract.is_aware_timestamp(value["recorded_at"]),
+        f"{label} recorded_at is not a timezone-aware ISO-8601 timestamp",
+    )
+    _require(
+        _is_sha256(value["binding_sha256"]),
+        f"{label} binding SHA-256 is malformed",
+    )
 
 
-def _is_timezone_aware_iso8601(value: object) -> bool:
-    if not isinstance(value, str) or "T" not in value:
-        return False
-    normalized = value[:-1] + "+00:00" if value.endswith("Z") else value
-    try:
-        parsed = datetime.fromisoformat(normalized)
-    except ValueError:
-        return False
-    return parsed.tzinfo is not None and parsed.utcoffset() is not None
+def _validate_visual_contract_schema(value: object) -> None:
+    _require(
+        isinstance(value, dict) and set(value) == VISUAL_CONTRACT_FIELDS,
+        "visual contract version fields differ",
+    )
+    for field in ("contract_id", "plan_id"):
+        _require_text(value[field], f"visual contract {field}")
+    _require(value["contract_id"].startswith("vc-"), "visual contract contract_id is malformed")
+    _require(
+        value["base_contract_id"] is None
+        or (
+            isinstance(value["base_contract_id"], str)
+            and bool(value["base_contract_id"].strip())
+        ),
+        "visual contract base_contract_id is malformed",
+    )
+    _require(
+        isinstance(value["plan_revision"], int)
+        and not isinstance(value["plan_revision"], bool)
+        and value["plan_revision"] > 0,
+        "visual contract plan_revision is invalid",
+    )
+    _require(
+        isinstance(value["targets"], list) and bool(value["targets"]),
+        "visual contract targets are empty",
+    )
+    for target in value["targets"]:
+        _require(
+            isinstance(target, dict) and set(target) == VISUAL_TARGET_FIELDS,
+            "visual target fields differ",
+        )
+        for field in ("reference_slot_id", "target_id", "artifact_id", "path"):
+            _require_text(target[field], f"visual target {field}")
+        _require(_is_sha256(target["sha256"]), "visual target SHA-256 is malformed")
+    _validate_approval_schema(value["approval"], "target approval")
 
 
 def _validate_schema(data: object) -> dict[str, object]:
@@ -204,7 +282,13 @@ def _validate_schema(data: object) -> dict[str, object]:
         "builder_id",
         "game",
         "artifacts",
-        "approved_visual_contract",
+        "reference_plans",
+        "visual_decisions",
+        "visual_scope_approvals",
+        "visual_correction_approvals",
+        "visual_generation_authorizations",
+        "visual_contract_versions",
+        "active_visual_contract_id",
         "facets",
         "reviews",
         "procedural_mode",
@@ -212,7 +296,7 @@ def _validate_schema(data: object) -> dict[str, object]:
         "procedural_systems",
     }
     _require(set(data) == required, "top-level manifest fields differ")
-    _require(data["schema_version"] == "evidence-run/v1", "wrong schema version")
+    _require(data["schema_version"] == "evidence-run/v2", "wrong schema version")
     try:
         uuid.UUID(data["run_id"])
     except (AttributeError, TypeError, ValueError) as error:
@@ -232,7 +316,19 @@ def _validate_schema(data: object) -> dict[str, object]:
     artifacts = data["artifacts"]
     _require(isinstance(artifacts, list), "artifacts must be a list")
     artifact_required = {"id", "kind", "provenance", "path", "sha256", "media_type"}
-    artifact_optional = {"target_id", "approved_target_sha256", "coverage"}
+    artifact_optional = {
+        "target_id",
+        "approved_target_sha256",
+        "coverage",
+        "reference_slot_id",
+        "generated_at",
+        "plan_id",
+        "plan_revision",
+        "rejected_at",
+        "rejection_artifact_id",
+        "rejection_reviewer_id",
+        "authorization_id",
+    }
     for row in artifacts:
         _require(isinstance(row, dict), "artifact must be an object")
         _require(artifact_required.issubset(row), "artifact fields are missing")
@@ -250,6 +346,66 @@ def _validate_schema(data: object) -> dict[str, object]:
                 isinstance(row["coverage"], list)
                 and all(isinstance(item, str) and item for item in row["coverage"]),
                 "artifact coverage is malformed",
+            )
+        if row["kind"] == "target_gameplay_image":
+            _require(
+                {"target_id", "reference_slot_id", "generated_at", "coverage", "plan_id", "plan_revision"}.issubset(row),
+                "target image fields are missing",
+            )
+            _require_text(row["target_id"], "target image target_id")
+            _require_text(row["reference_slot_id"], "target image reference_slot_id")
+            _require_text(row.get("authorization_id"), "target image authorization_id")
+            _require_text(row["plan_id"], "target image plan_id")
+            _require(
+                isinstance(row["plan_revision"], int)
+                and not isinstance(row["plan_revision"], bool)
+                and row["plan_revision"] > 0,
+                "target image plan_revision must be a positive integer",
+            )
+            _require(
+                visual_contract.is_aware_timestamp(row["generated_at"]),
+                "target image generated_at is not a timezone-aware ISO-8601 timestamp",
+            )
+        if row["kind"] == "rejected_target_image":
+            _require(
+                set(row) == REJECTED_TARGET_FIELDS,
+                "rejected target fields differ",
+            )
+            _require(bool(row["coverage"]), "rejected target coverage is empty")
+            _require_text(row["target_id"], "rejected target target_id")
+            _require_text(row["reference_slot_id"], "rejected target reference_slot_id")
+            _require_text(row["authorization_id"], "target image authorization_id")
+            _require_text(row["plan_id"], "rejected target plan_id")
+            _require(
+                isinstance(row["plan_revision"], int)
+                and not isinstance(row["plan_revision"], bool)
+                and row["plan_revision"] > 0,
+                "rejected target plan_revision must be a positive integer",
+            )
+            _require_text(
+                row["rejection_artifact_id"],
+                "rejected target rejection_artifact_id",
+            )
+            _require_text(
+                row["rejection_reviewer_id"],
+                "rejected target rejection_reviewer_id",
+            )
+            _require(
+                visual_contract.is_aware_timestamp(row["generated_at"]),
+                "rejected target generated_at is not a timezone-aware ISO-8601 timestamp",
+            )
+            _require(
+                visual_contract.is_aware_timestamp(row["rejected_at"]),
+                "rejected target rejected_at is not a timezone-aware ISO-8601 timestamp",
+            )
+            _require(
+                _timestamp(row["generated_at"]) < _timestamp(row["rejected_at"]),
+                "rejected target was rejected before it was generated",
+            )
+        if row["kind"] not in {"target_gameplay_image", "rejected_target_image"}:
+            _require(
+                "authorization_id" not in row,
+                "only generated target artifacts may carry authorization_id",
             )
 
     facets = data["facets"]
@@ -295,39 +451,107 @@ def _validate_schema(data: object) -> dict[str, object]:
         _require(row["verdict"] in {"accept", "reject"}, "review verdict is unknown")
         _require(isinstance(row["rationale"], str) and bool(row["rationale"].strip()), "review rationale is empty")
 
-    approval = data["approved_visual_contract"]
-    if approval is not None:
-        _require(isinstance(approval, dict), "visual approval must be an object")
+    decisions = data["visual_decisions"]
+    _require(isinstance(decisions, list), "visual_decisions must be a list")
+    decision_by_id: dict[str, dict[str, object]] = {}
+    for row in decisions:
+        try:
+            visual_contract.validate_visual_decision(row)
+        except visual_contract.SchemaError as error:
+            raise SchemaError(str(error)) from error
+        decision_id = row["decision_id"]
+        _require(decision_id not in decision_by_id, "visual decision ids are duplicate")
+        decision_by_id[decision_id] = row
+
+    scope_approvals = data["visual_scope_approvals"]
+    _require(isinstance(scope_approvals, list), "visual_scope_approvals must be a list")
+    approval_by_id: dict[str, dict[str, object]] = {}
+    for row in scope_approvals:
+        _require(isinstance(row, dict), "scope approval must be an object")
+        approval_id = row.get("approval_artifact_id")
+        _require(isinstance(approval_id, str) and bool(approval_id.strip()), "scope approval approval_artifact_id is empty")
+        _require(approval_id not in approval_by_id, "scope approval artifact ids are duplicate")
+        decision = decision_by_id.get(row.get("decision_id"))
+        _require(decision is not None, "scope approval decision does not resolve")
         _require(
-            set(approval)
-            == {
-                "contract_id",
-                "approval_artifact_id",
-                "reviewer_id",
-                "decision",
-                "approved_targets",
-                "recorded_at",
-            },
-            "visual approval fields differ",
+            decision["decision_kind"] != "reference_not_proof",
+            "reference_not_proof decision may not be referenced by a scope approval",
         )
-        for field in ("contract_id", "approval_artifact_id", "reviewer_id", "recorded_at"):
-            _require(isinstance(approval[field], str) and bool(approval[field].strip()), f"approval {field} is empty")
+        try:
+            visual_contract.validate_scope_approval(row, decision)
+        except visual_contract.SchemaError as error:
+            raise SchemaError(str(error)) from error
+        approval_by_id[approval_id] = row
+
+    corrections = data["visual_correction_approvals"]
+    _require(isinstance(corrections, list), "visual_correction_approvals must be a list")
+    correction_ids: set[str] = set()
+    for row in corrections:
+        _require(isinstance(row, dict), "correction approval must be an object")
+        approval_id = row.get("approval_artifact_id")
+        _require(isinstance(approval_id, str) and bool(approval_id.strip()), "correction approval artifact id is empty")
+        _require(approval_id not in approval_by_id, "approval artifact ids are duplicate")
+        _require(approval_id not in correction_ids, "correction approval artifact ids are duplicate")
+        correction_ids.add(approval_id)
+
+    authorizations = data["visual_generation_authorizations"]
+    _require(isinstance(authorizations, list), "visual_generation_authorizations must be a list")
+    authorization_ids: set[str] = set()
+    for row in authorizations:
+        try:
+            visual_contract.validate_generation_authorization(row)
+        except visual_contract.SchemaError as error:
+            raise SchemaError(str(error)) from error
+        authorization_id = row["authorization_id"]
+        _require(authorization_id not in authorization_ids, "authorization ids are duplicate")
+        authorization_ids.add(authorization_id)
+        decision = decision_by_id.get(row["decision_id"])
         _require(
-            approval["contract_id"].startswith("vc-")
-            and len(approval["contract_id"]) > len("vc-"),
-            "visual approval contract_id is malformed",
+            decision is None or decision["decision_kind"] != "reference_not_proof",
+            "reference_not_proof decision may not be referenced by an authorization",
+        )
+
+    plans = data["reference_plans"]
+    _require(isinstance(plans, list), "reference_plans must be a list")
+    for row in plans:
+        _require(isinstance(row, dict), "reference plan must be an object")
+        stored_plan = dict(row)
+        stored_approval = stored_plan.get("approval")
+        stored_plan["approval"] = None
+        try:
+            visual_contract.validate_reference_plan(stored_plan, allow_placeholders=False)
+        except visual_contract.SchemaError as error:
+            raise SchemaError(str(error)) from error
+        _require(isinstance(stored_approval, dict), "reference plan scope approval does not resolve")
+        approval_id = stored_approval.get("approval_artifact_id")
+        approval = approval_by_id.get(approval_id)
+        _require(approval == stored_approval, "reference plan scope approval does not resolve")
+        decision = decision_by_id.get(approval["decision_id"])
+        _require(decision is not None, "reference plan decision does not resolve")
+        _require(
+            decision["decision_kind"] != "reference_not_proof",
+            "reference_not_proof decision may not be referenced by a plan",
         )
         _require(
-            _is_timezone_aware_iso8601(approval["recorded_at"]),
-            "visual approval recorded_at is not a timezone-aware ISO-8601 timestamp",
+            decision["reference_plan"] == stored_plan,
+            "decision reference plan differs",
         )
-        _require(approval["decision"] in {"approved", "rejected"}, "approval decision is unknown")
-        _require(isinstance(approval["approved_targets"], list), "approved targets must be a list")
-        for target in approval["approved_targets"]:
-            _require(isinstance(target, dict) and set(target) == {"target_id", "sha256", "path"}, "approved target fields differ")
-            _require(isinstance(target["target_id"], str) and bool(target["target_id"]), "target id is empty")
-            _require(_is_sha256(target["sha256"]), "target SHA-256 is malformed")
-            _require(isinstance(target["path"], str) and bool(target["path"]), "target path is empty")
+        try:
+            visual_contract.validate_scope_approval(approval, decision)
+        except visual_contract.SchemaError as error:
+            raise SchemaError(str(error)) from error
+
+    versions = data["visual_contract_versions"]
+    _require(isinstance(versions, list), "visual_contract_versions must be a list")
+    for row in versions:
+        _validate_visual_contract_schema(row)
+
+    active_contract_id = data["active_visual_contract_id"]
+    _require(
+        active_contract_id is None
+        or (isinstance(active_contract_id, str) and bool(active_contract_id.strip())),
+        "active_visual_contract_id is malformed",
+    )
 
     _require(data["procedural_mode"] in {"none", "seeded"}, "procedural mode is unknown")
     _require(
@@ -454,58 +678,514 @@ def _review_errors(
     return errors
 
 
+def _timestamp(value: str) -> datetime:
+    normalized = value[:-1] + "+00:00" if value.endswith("Z") else value
+    return datetime.fromisoformat(normalized)
+
+
+def _unique_index(
+    rows: list[dict[str, object]], key, label: str
+) -> tuple[dict[object, dict[str, object]], list[str]]:
+    """Index source records without letting duplicate identities choose a winner."""
+    indexed: dict[object, dict[str, object]] = {}
+    errors: list[str] = []
+    for row in rows:
+        identity = key(row)
+        if identity in indexed:
+            errors.append(f"duplicate {label}: {identity}")
+        else:
+            indexed[identity] = row
+    return indexed, errors
+
+
+def _generation_authorization_errors(
+    data: dict[str, object], artifact_index: dict[str, dict[str, object]]
+) -> list[str]:
+    """Resolve every generated image through its immutable authorization chain."""
+    errors: list[str] = []
+    decisions, duplicate_errors = _unique_index(
+        data["visual_decisions"], lambda row: row.get("decision_id"), "visual decision id"
+    ); errors.extend(duplicate_errors)
+    scopes, duplicate_errors = _unique_index(
+        data["visual_scope_approvals"], lambda row: row.get("approval_artifact_id"), "scope approval artifact id"
+    ); errors.extend(duplicate_errors)
+    corrections, duplicate_errors = _unique_index(
+        data["visual_correction_approvals"], lambda row: row.get("approval_artifact_id"), "correction approval artifact id"
+    ); errors.extend(duplicate_errors)
+    authorizations, duplicate_errors = _unique_index(
+        data["visual_generation_authorizations"], lambda row: row.get("authorization_id"), "authorization id"
+    ); errors.extend(duplicate_errors)
+    plans, duplicate_errors = _unique_index(
+        data["reference_plans"], lambda row: (row.get("plan_id"), row.get("revision")), "reference plan revision"
+    ); errors.extend(duplicate_errors)
+
+    resolved: dict[str, tuple[dict[str, object], dict[str, object]]] = {}
+    for authorization_id, authorization in sorted(authorizations.items(), key=lambda item: str(item[0])):
+        decision = decisions.get(authorization.get("decision_id"))
+        plan = plans.get((authorization.get("plan_id"), authorization.get("plan_revision")))
+        scope = scopes.get(authorization.get("approval_artifact_id"))
+        if decision is None:
+            errors.append(f"authorization {authorization_id} decision does not resolve")
+        if plan is None:
+            errors.append(f"authorization {authorization_id} plan does not resolve")
+        if scope is None:
+            errors.append(f"authorization {authorization_id} scope approval does not resolve")
+        if decision is None or plan is None or scope is None:
+            continue
+        try:
+            visual_contract.validate_visual_decision(decision)
+            visual_contract.validate_scope_approval(scope, decision)
+            visual_contract.validate_generation_authorization(authorization)
+        except visual_contract.SchemaError as error:
+            errors.append(f"authorization {authorization_id} {error}")
+            continue
+        decision_plan = decision["reference_plan"]
+        stored_plan = dict(plan)
+        stored_plan["approval"] = None
+        if decision_plan != stored_plan:
+            errors.append(f"authorization {authorization_id} decision plan binding drifted")
+        if authorization["decision_sha256"] != visual_contract.canonical_sha256(decision):
+            errors.append(f"authorization {authorization_id} decision binding drifted")
+        if authorization["plan_sha256"] != visual_contract.canonical_plan_sha256(decision_plan):
+            errors.append(f"authorization plan binding drifted: {authorization_id}")
+        if authorization["approval_sha256"] != visual_contract.canonical_sha256(scope):
+            errors.append(f"authorization {authorization_id} scope approval binding drifted")
+        if authorization["batch_kind"] != ("initial" if plan["kind"] == "initial" else "delta") and authorization["batch_kind"] != "correction":
+            errors.append(f"authorization {authorization_id} batch kind differs from plan")
+        approved_slots = [row["reference_slot_id"] for row in plan["rows"]]
+        authorized_slots = [row["reference_slot_id"] for row in authorization["authorized_slots"]]
+        if authorization["batch_kind"] != "correction" and authorized_slots != approved_slots:
+            errors.append(f"authorization slot set differs from approved plan: {authorization_id}")
+        expected_supersedes = [row["supersedes_target_id"] for row in plan["rows"] if row["change_kind"] == "replace"]
+        if authorization["supersedes_target_ids"] != expected_supersedes:
+            errors.append(f"authorization supersession set differs: {authorization_id}")
+        if authorization["base_contract_id"] != plan["base_contract_id"]:
+            errors.append(f"authorization {authorization_id} base contract binding drifted")
+        resolved[str(authorization_id)] = (authorization, plan)
+
+    generated = [row for row in artifact_index.values() if row["kind"] in {"target_gameplay_image", "rejected_target_image"}]
+    counts: dict[tuple[str, str], int] = {}
+    rejected_by_target: dict[str, dict[str, object]] = {}
+    prior_rejections: dict[tuple[str, int, str], list[dict[str, object]]] = {}
+    for rejected in generated:
+        if rejected["kind"] == "rejected_target_image":
+            rejection_key = (
+                rejected["plan_id"], rejected["plan_revision"],
+                rejected["reference_slot_id"],
+            )
+            prior_rejections.setdefault(rejection_key, []).append(rejected)
+            rejected_by_target[str(rejected["target_id"])] = rejected
+    for attempts in prior_rejections.values():
+        attempts.sort(key=lambda row: (_timestamp(row["rejected_at"]), str(row["id"])))
+    for artifact in sorted(generated, key=lambda row: str(row["id"])):
+        authorization_id = artifact.get("authorization_id")
+        if authorization_id not in resolved:
+            errors.append(f"artifact {artifact['id']} authorization does not resolve: {authorization_id}")
+            if artifact["kind"] == "target_gameplay_image" and any(
+                rejected.get("reference_slot_id") == artifact.get("reference_slot_id")
+                for rejected in generated
+                if rejected["kind"] == "rejected_target_image"
+            ):
+                errors.append(f"replacement target lacks correction authorization: {artifact['target_id']}")
+            continue
+        authorization, plan = resolved[authorization_id]
+        slot_id = artifact.get("reference_slot_id")
+        slots = {row["reference_slot_id"] for row in authorization["authorized_slots"]}
+        if slot_id not in slots:
+            errors.append(f"artifact {artifact['id']} slot is outside its authorization: {slot_id}")
+            continue
+        plan_slot = next((row for row in plan["rows"] if row["reference_slot_id"] == slot_id), None)
+        if plan_slot is None or artifact.get("coverage") != plan_slot["coverage"]:
+            errors.append(f"artifact {artifact['id']} plan row binding drifted")
+        if artifact["plan_id"] != plan["plan_id"] or artifact["plan_revision"] != plan["revision"]:
+            errors.append(f"artifact {artifact['id']} plan binding drifted")
+        if _timestamp(artifact["generated_at"]) <= _timestamp(authorization["issued_at"]):
+            errors.append(f"artifact {artifact['id']} generated before authorization")
+        key = (authorization_id, slot_id)
+        counts[key] = counts.get(key, 0) + 1
+        if artifact["kind"] == "target_gameplay_image":
+            rejection_key = (plan["plan_id"], plan["revision"], slot_id)
+            previous = [
+                row for row in prior_rejections.get(rejection_key, [])
+                if _timestamp(row["rejected_at"]) < _timestamp(artifact["generated_at"])
+            ]
+            if previous:
+                latest = previous[-1]
+                correction = corrections.get(authorization["correction_approval_artifact_id"])
+                if (
+                    authorization["batch_kind"] != "correction"
+                    or authorization["rejected_target_id"] != latest["target_id"]
+                    or correction is None
+                ):
+                    errors.append(
+                        f"replacement target lacks correction authorization: {artifact['target_id']}"
+                    )
+
+    for authorization_id, (authorization, _) in sorted(resolved.items()):
+        for slot in authorization["authorized_slots"]:
+            key = (authorization_id, slot["reference_slot_id"])
+            count = counts.get(key, 0)
+            if count > slot["result_budget"]:
+                errors.append(f"authorization slot result budget exceeded: {authorization_id} {slot['reference_slot_id']}")
+            if count == 0:
+                errors.append(f"authorization has no generated result: {authorization_id} {slot['reference_slot_id']}")
+        if authorization["batch_kind"] == "correction":
+            rejected = rejected_by_target.get(str(authorization["rejected_target_id"]))
+            correction = corrections.get(authorization["correction_approval_artifact_id"])
+            if rejected is None or correction is None:
+                errors.append(f"authorization {authorization_id} replacement target lacks correction authorization")
+                continue
+            correction_slots = [row["reference_slot_id"] for row in authorization["authorized_slots"]]
+            if correction_slots != [rejected["reference_slot_id"]]:
+                errors.append(
+                    f"correction authorization slot set differs: {authorization_id}"
+                )
+            decision = decisions.get(authorization["decision_id"])
+            try:
+                projection = {field: rejected[field] for field in visual_contract.REJECTED_AUTH_INPUT_FIELDS}
+                visual_contract.validate_correction_approval(correction, decision, projection)
+            except (KeyError, visual_contract.SchemaError) as error:
+                errors.append(f"authorization {authorization_id} {error}")
+            if _timestamp(authorization["issued_at"]) <= _timestamp(rejected["rejected_at"]):
+                errors.append(f"authorization {authorization_id} correction authorization precedes rejection")
+    return sorted(set(errors))
+
+
+def _approval_record_errors(
+    label: str,
+    approval: dict[str, object] | None,
+    artifact_index: dict[str, dict[str, object]],
+    builder_id: str,
+    expected_binding: str,
+) -> list[str]:
+    if approval is None:
+        return [f"{label} is missing"]
+    errors: list[str] = []
+    if approval["decision"] != "approved":
+        errors.append(f"{label} is not approved")
+    artifact = artifact_index.get(approval["approval_artifact_id"])
+    if artifact is None or artifact["kind"] != "review_record":
+        errors.append(f"{label} record is missing")
+    if approval["reviewer_id"] == builder_id:
+        errors.append(f"{label} reviewer is the builder")
+    binding = (
+        approval["plan_sha256"]
+        if approval.get("schema_version") == "visual-scope-approval/v1"
+        else approval["binding_sha256"]
+    )
+    if binding != expected_binding:
+        errors.append(f"{label} binding drifted")
+    return errors
+
+
+def _approved_visual_chain(
+    data: dict[str, object],
+) -> tuple[list[dict[str, object]], list[str]]:
+    errors: list[str] = []
+    approved: dict[str, dict[str, object]] = {}
+    for row in data["visual_contract_versions"]:
+        approval = row["approval"]
+        if approval is None or approval["decision"] != "approved":
+            continue
+        contract_id = row["contract_id"]
+        if contract_id in approved:
+            errors.append(f"duplicate approved visual contract id: {contract_id}")
+        approved[contract_id] = row
+    active_id = data["active_visual_contract_id"]
+    if active_id is None or active_id not in approved:
+        return [], errors + ["active visual contract does not resolve exactly once"]
+
+    reverse_chain: list[dict[str, object]] = []
+    seen: set[str] = set()
+    current_id: str | None = active_id
+    while current_id is not None:
+        if current_id in seen:
+            return [], errors + ["visual contract ancestry contains a cycle"]
+        seen.add(current_id)
+        current = approved.get(current_id)
+        if current is None:
+            return [], errors + [f"visual contract base {current_id} is missing"]
+        reverse_chain.append(current)
+        current_id = current["base_contract_id"]
+    chain = list(reversed(reverse_chain))
+    if set(approved) != seen:
+        errors.append("approved visual contract history branches or is stale")
+    if chain and chain[0]["base_contract_id"] is not None:
+        errors.append("visual contract root has a base")
+    return chain, errors
+
+
+def _active_visual_contract_state(
+    data: dict[str, object],
+    artifact_index: dict[str, dict[str, object]],
+) -> tuple[dict[str, dict[str, object]], list[str], str | None]:
+    errors: list[str] = _generation_authorization_errors(data, artifact_index)
+    plans: dict[tuple[str, int], dict[str, object]] = {}
+    for row in data["reference_plans"]:
+        key = (row["plan_id"], row["revision"])
+        if key in plans:
+            errors.append(f"duplicate reference plan revision: {key[0]} r{key[1]}")
+        plans[key] = row
+
+    active: dict[str, dict[str, object]] = {}
+    referenced_artifacts: set[str] = set()
+    historical_target_ids: set[str] = set()
+    rejected_artifact_ids: set[str] = set()
+    rejected_attempts: dict[
+        tuple[str, int, str], list[dict[str, object]]
+    ] = {}
+    for artifact in artifact_index.values():
+        if artifact["kind"] != "rejected_target_image":
+            continue
+        rejected_artifact_ids.add(artifact["id"])
+        rejection_key = (
+            artifact["plan_id"],
+            artifact["plan_revision"],
+            artifact["reference_slot_id"],
+        )
+        rejected_attempts.setdefault(rejection_key, []).append(artifact)
+        target_id = artifact["target_id"]
+        if target_id in historical_target_ids:
+            errors.append(f"rejected target id {target_id} is reused")
+        historical_target_ids.add(target_id)
+
+        plan_row = plans.get((artifact["plan_id"], artifact["plan_revision"]))
+        if plan_row is None:
+            errors.append(f"rejected target {target_id} plan revision is missing")
+        else:
+            errors.extend(
+                _approval_record_errors(
+                    f"rejected target {target_id} scope approval",
+                    plan_row["approval"],
+                    artifact_index,
+                    data["builder_id"],
+                visual_contract.canonical_plan_sha256(
+                        {
+                            key: value
+                            for key, value in plan_row.items()
+                            if key != "approval"
+                        }
+                    ),
+                )
+            )
+            slot_row = next(
+                (
+                    row
+                    for row in plan_row["rows"]
+                    if row["reference_slot_id"] == artifact["reference_slot_id"]
+                ),
+                None,
+            )
+            if slot_row is None:
+                errors.append(
+                    f"rejected target {target_id} slot is outside its approved plan"
+                )
+            elif artifact["coverage"] != slot_row["coverage"]:
+                errors.append(f"rejected target {target_id} coverage drifted")
+            if plan_row["approval"] is not None:
+                scope_time = _timestamp(plan_row["approval"]["recorded_at"])
+                if _timestamp(artifact["generated_at"]) <= scope_time:
+                    errors.append(
+                        f"rejected target {target_id} was generated before scope approval"
+                    )
+
+        rejection_record = artifact_index.get(artifact["rejection_artifact_id"])
+        if rejection_record is None or rejection_record["kind"] != "review_record":
+            errors.append(f"rejected target {target_id} rejection record is missing")
+        if artifact["rejection_reviewer_id"] == data["builder_id"]:
+            errors.append(f"rejected target {target_id} reviewer is the builder")
+
+    latest_rejection_by_slot: dict[tuple[str, int, str], datetime] = {}
+    for rejection_key, attempts in rejected_attempts.items():
+        attempts.sort(key=lambda row: _timestamp(row["generated_at"]))
+        previous_rejected_at: datetime | None = None
+        latest_rejected_at: datetime | None = None
+        for attempt in attempts:
+            generated_at = _timestamp(attempt["generated_at"])
+            if (
+                previous_rejected_at is not None
+                and generated_at <= previous_rejected_at
+            ):
+                errors.append(
+                    f"target {attempt['target_id']} was generated before prior "
+                    "rejection authorization"
+                )
+            rejected_at = _timestamp(attempt["rejected_at"])
+            previous_rejected_at = rejected_at
+            if latest_rejected_at is None or rejected_at > latest_rejected_at:
+                latest_rejected_at = rejected_at
+        assert latest_rejected_at is not None
+        latest_rejection_by_slot[rejection_key] = latest_rejected_at
+
+    mapped_artifact_ids = {
+        target["artifact_id"]
+        for version in data["visual_contract_versions"]
+        for target in version["targets"]
+    }
+    for artifact_id in sorted(rejected_artifact_ids & mapped_artifact_ids):
+        errors.append(
+            f"rejected target artifact {artifact_id} is referenced by a visual contract"
+        )
+
+    chain, chain_errors = _approved_visual_chain(data)
+    errors.extend(chain_errors)
+    for version in chain:
+        plan_row = plans.get((version["plan_id"], version["plan_revision"]))
+        if plan_row is None:
+            errors.append(f"visual contract {version['contract_id']} plan is missing")
+            continue
+        errors.extend(
+            _approval_record_errors(
+                "scope approval",
+                plan_row["approval"],
+                artifact_index,
+                data["builder_id"],
+                    visual_contract.canonical_plan_sha256(
+                    {key: value for key, value in plan_row.items() if key != "approval"}
+                ),
+            )
+        )
+        errors.extend(
+            _approval_record_errors(
+                "target approval",
+                version["approval"],
+                artifact_index,
+                data["builder_id"],
+                visual_contract.canonical_sha256(
+                    {key: value for key, value in version.items() if key != "approval"}
+                ),
+            )
+        )
+        is_root = version is chain[0]
+        expected_kind = "initial" if is_root else "delta"
+        if plan_row["kind"] != expected_kind:
+            errors.append(
+                f"visual contract {version['contract_id']} uses the wrong plan kind"
+            )
+        if plan_row["base_contract_id"] != version["base_contract_id"]:
+            errors.append(f"visual contract {version['contract_id']} plan base differs")
+
+        plan_slots = {row["reference_slot_id"]: row for row in plan_row["rows"]}
+        target_slots = {
+            row["reference_slot_id"]: row for row in version["targets"]
+        }
+        if len(plan_slots) != len(plan_row["rows"]):
+            errors.append("reference plan slot ids are duplicate")
+        if len(target_slots) != len(version["targets"]):
+            errors.append("visual target slot ids are duplicate")
+        if set(plan_slots) != set(target_slots):
+            errors.append("visual targets do not exactly cover approved reference slots")
+
+        scope_time = (
+            _timestamp(plan_row["approval"]["recorded_at"])
+            if plan_row["approval"] is not None
+            else None
+        )
+        approval_time = (
+            _timestamp(version["approval"]["recorded_at"])
+            if version["approval"] is not None
+            else None
+        )
+        if approval_time is not None:
+            plan_authorizations = {
+                row["authorization_id"]
+                for row in data["visual_generation_authorizations"]
+                if row["plan_id"] == plan_row["plan_id"]
+                and row["plan_revision"] == plan_row["revision"]
+            }
+            batch = [
+                row for row in artifact_index.values()
+                if row["kind"] == "target_gameplay_image"
+                and row.get("authorization_id") in plan_authorizations
+            ]
+            if batch and max(_timestamp(row["generated_at"]) for row in batch) >= approval_time:
+                errors.append("target approval precedes complete authorized batch")
+        for slot_id, target in target_slots.items():
+            slot_row = plan_slots.get(slot_id)
+            if slot_row is None:
+                continue
+            target_id = target["target_id"]
+            if target_id in historical_target_ids:
+                errors.append(
+                    f"target id {target_id} is reused in visual contract history"
+                )
+            historical_target_ids.add(target_id)
+            artifact = artifact_index.get(target["artifact_id"])
+            referenced_artifacts.add(target["artifact_id"])
+            if artifact is None:
+                errors.append(f"target artifact is missing: {target_id}")
+                continue
+            expected_parent = (
+                Path("docs") / "visual-contract" / version["contract_id"] / "targets"
+            )
+            if Path(target["path"]).parent != expected_parent:
+                errors.append(
+                    f"target {target_id} is not at its contract version path"
+                )
+            if (
+                artifact["kind"] != "target_gameplay_image"
+                or artifact["provenance"] != "imagegen_target"
+                or artifact["target_id"] != target_id
+                or artifact["reference_slot_id"] != slot_id
+                or artifact["path"] != target["path"]
+                or artifact["sha256"] != target["sha256"]
+                or artifact["coverage"] != slot_row["coverage"]
+            ):
+                errors.append(f"target {target_id} mapping or bytes drifted")
+            generated = _timestamp(artifact["generated_at"])
+            if scope_time is not None and generated <= scope_time:
+                errors.append(
+                    f"target {target_id} was generated before scope approval"
+                )
+            latest_rejection = latest_rejection_by_slot.get(
+                (version["plan_id"], version["plan_revision"], slot_id)
+            )
+            if latest_rejection is not None and generated <= latest_rejection:
+                errors.append(
+                    f"target {target_id} was generated before prior "
+                    "rejection authorization"
+                )
+            if approval_time is not None and generated >= approval_time:
+                errors.append(
+                    f"target {target_id} was generated after target approval"
+                )
+
+            if slot_row["change_kind"] == "replace":
+                old_id = slot_row["supersedes_target_id"]
+                if old_id not in active:
+                    errors.append(f"replacement target {old_id} is not active")
+                else:
+                    del active[old_id]
+            if target_id in active:
+                errors.append(f"duplicate active target id: {target_id}")
+            else:
+                active[target_id] = target
+
+    for artifact in artifact_index.values():
+        if (
+            artifact["kind"] == "target_gameplay_image"
+            and artifact["id"] not in referenced_artifacts
+        ):
+            errors.append(
+                f"generated target artifact {artifact['id']} is outside an approved plan"
+            )
+    reviewer = (
+        chain[-1]["approval"]["reviewer_id"]
+        if chain and chain[-1]["approval"] is not None
+        else None
+    )
+    return active, errors, reviewer
+
+
 def _visual_errors(
     data: dict[str, object],
     facet_row: dict[str, object],
     rows: list[dict[str, object]],
     artifact_index: dict[str, dict[str, object]],
 ) -> tuple[list[str], str | None]:
-    errors: list[str] = []
-    approval = data["approved_visual_contract"]
-    if approval is None:
-        return ["visual approval is missing"], None
-    approval_reviewer = approval["reviewer_id"]
-    if approval["decision"] != "approved":
-        errors.append("visual contract is not approved")
-    approval_artifact = artifact_index.get(approval["approval_artifact_id"])
-    if approval_artifact is None or approval_artifact["kind"] != "review_record":
-        errors.append("visual approval record is missing")
-    if approval_reviewer == data["builder_id"]:
-        errors.append("visual approval reviewer is the builder")
-
-    approved: dict[str, dict[str, object]] = {}
-    artifacts_by_path: dict[str, list[dict[str, object]]] = {}
-    for artifact in artifact_index.values():
-        artifacts_by_path.setdefault(artifact["path"], []).append(artifact)
-    for target in approval["approved_targets"]:
-        target_id = target["target_id"]
-        if target_id in approved:
-            errors.append(f"duplicate approved target id: {target_id}")
-            continue
-        approved[target_id] = target
-        relative = Path(target["path"])
-        parts = relative.parts
-        if (
-            relative.is_absolute()
-            or ".." in parts
-            or len(parts) < 5
-            or parts[0:2] != ("docs", "visual-contract")
-            or parts[2] != approval["contract_id"]
-            or parts[3] != "targets"
-        ):
-            errors.append(f"approved target {target_id} is not at a versioned project path")
-            continue
-        matches = artifacts_by_path.get(target["path"], [])
-        if len(matches) != 1:
-            errors.append(f"approved target {target_id} does not bind one artifact")
-            continue
-        artifact = matches[0]
-        if (
-            artifact["kind"] != "target_gameplay_image"
-            or artifact["provenance"] != "imagegen_target"
-            or artifact["sha256"] != target["sha256"]
-        ):
-            errors.append(f"approved target {target_id} bytes or provenance drifted")
+    approved, errors, approval_reviewer = _active_visual_contract_state(
+        data, artifact_index
+    )
 
     captures = [row for row in rows if row["kind"] == "canonical_godot_capture"]
     captured_ids: set[str] = set()
@@ -677,6 +1357,7 @@ def _candidate_errors(
 
 def _evaluate(root: Path, data: dict[str, object]) -> dict[str, object]:
     artifact_index, global_errors = _artifact_index(root, data["artifacts"])
+    global_errors.extend(_generation_authorization_errors(data, artifact_index))
     review_index, review_index_errors = _review_index(data["reviews"])
     global_errors.extend(review_index_errors)
     review_references: dict[str, list[str]] = {}
@@ -810,15 +1491,16 @@ def _validate(args: argparse.Namespace) -> int:
     ):
         return 3
     try:
-        data = _validate_schema(_loads_json(manifest.read_text(encoding="utf-8")))
+        data = _validate_schema(
+            visual_contract.loads_json(manifest.read_text(encoding="utf-8"))
+        )
     except (OSError, UnicodeError, json.JSONDecodeError, SchemaError):
         return 3
     protected = {manifest, (root / "project.godot").resolve()}
     for artifact in data["artifacts"]:
         protected.add((root / Path(artifact["path"])).resolve())
-    approval = data["approved_visual_contract"]
-    if approval is not None:
-        for target in approval["approved_targets"]:
+    for version in data["visual_contract_versions"]:
+        for target in version["targets"]:
             protected.add((root / Path(target["path"])).resolve())
     if report.suffix.lower() != ".json" or report in protected:
         return 3
@@ -826,7 +1508,9 @@ def _validate(args: argparse.Namespace) -> int:
         if not report.is_file():
             return 3
         try:
-            previous = _loads_json(report.read_text(encoding="utf-8"))
+            previous = visual_contract.loads_json(
+                report.read_text(encoding="utf-8")
+            )
         except (OSError, UnicodeError, json.JSONDecodeError, SchemaError):
             return 3
         if not (

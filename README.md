@@ -6,7 +6,11 @@
 
 The workflow moves through `AUDIT -> SPECIFY -> VISUAL_PENDING -> VISUAL_APPROVED -> GODOT_FEASIBILITY -> CORE_LOOP -> PRODUCTION -> RELEASE`.
 
-Before material production, it freezes a coverage matrix, generates a target-gameplay screenshot pack, records each approved target with a stable ID, SHA-256 hash, and project-relative path, and asks for exact approval. It then requires a buildable Godot implementation and evidence for the causal core loop before multiplying content. It routes into 2D, 3D, procedural-art, evidence-ledger, and release-check references only when they apply.
+Visual references are needs-derived rather than fixed in count. The user approves
+the complete slot set before ImageGen; the deterministic command then issues an
+exact batch authorization. One condition is that one authorized row budgets one generated result.
+A late visual delta repeats the decision and authorization flow, and a correction needs fresh authorization.
+The rule is that unauthorized raw output cannot enter verified evidence or a release result.
 
 Important: screenshots are design evidence only. They never prove mechanics. Mechanics require evidence from the target Godot build that shows the input, state change, and outcome, with filmstrip or video evidence where the skill calls for it.
 

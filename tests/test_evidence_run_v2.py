@@ -931,11 +931,11 @@ class InitialVisualContractTests(unittest.TestCase):
         manifest = self.add_delta(
             self.candidate(),
             change_kind="replace",
-            supersedes_target_id="TARGET-UNKNOWN",
+            supersedes_target_id="TARGET-404",
         )
         _, errors, _ = self.state(manifest)
         self.assertIn(
-            "replacement target TARGET-UNKNOWN is not active",
+            "replacement target TARGET-404 is not active",
             errors,
         )
 

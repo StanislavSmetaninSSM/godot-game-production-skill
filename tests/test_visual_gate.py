@@ -530,6 +530,12 @@ class VisualAuthorizationTests(unittest.TestCase):
             "TODO",
             "PENDING_CAMERA_TARGET",
             "TARGET-PLACEHOLDER-CAMERA",
+            "camera TBD until review",
+            "unknown camera framing",
+            "camera: TODO after playtest",
+            "art direction unspecified",
+            "camera <required-value:angle>",
+            "camera PENDING_REVIEW",
         ):
             with self.subTest(marker=marker):
                 decision = initial_decision()

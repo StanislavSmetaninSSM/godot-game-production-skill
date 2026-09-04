@@ -181,8 +181,9 @@ continuing work.
 Pending text or identity placeholders use `<required-value>` or a distinct indexed
 `<required-value:label>` form. Authorization also rejects common natural-language
 unresolved markers (`unspecified`, `unknown`, `TBD`, `TODO`, `PENDING_*`, or a
-`PLACEHOLDER` token) anywhere in the complete decision, so pending prose outside
-the reference plan cannot silently become generation authority.
+`PLACEHOLDER` token), including standalone markers embedded in longer text,
+in every content field of the complete decision. Pending prose outside the
+reference plan cannot silently become generation authority.
 
 Codex records the missing information, affected tasks or slices, classification as
 an addition or replacement, and a delta plan. Only dependent work enters

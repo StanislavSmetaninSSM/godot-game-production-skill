@@ -49,8 +49,10 @@ authorization with duplicate target IDs, a target marked both preserved and
 affected, overlapping blocked/continuing work, or an affected replacement that did
 not match the plan supersession. RED regressions reproduced all five cases. Decision
 validation now rejects them before approval can become generation authority, and
-authorization rejects placeholders anywhere in the complete decision rather than
-only inside `reference_plan`.
+authorization rejects placeholders across the complete decision's content fields
+rather than only inside `reference_plan`. Review then exposed embedded variants such as
+`camera TBD until review`; the marker check now recognizes standalone unresolved
+tokens inside longer text as well.
 
 ## Final pragmatic acceptance cutoff
 

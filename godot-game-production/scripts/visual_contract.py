@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import re
 import uuid
 from datetime import datetime
 from pathlib import PurePosixPath
@@ -198,29 +199,25 @@ def _text_list(
 
 def _is_placeholder_text(value: str) -> bool:
     normalized = value.strip().casefold()
-    if normalized in {
-        PLACEHOLDER,
+    if re.search(r"<required-value(?::[^<>]*)?>", normalized):
+        return True
+    words = re.findall(r"[a-z0-9]+", normalized)
+    if set(words) & {
         "unspecified",
-        "not specified",
         "unknown",
         "tbd",
         "todo",
-        "to be determined",
-        "to be decided",
+        "pending",
+        "placeholder",
     }:
         return True
-    if normalized.startswith("<required-value:") and normalized.endswith(">"):
-        return True
-    if normalized.startswith(("pending_", "pending-", "pending ")):
-        return True
-    words = (
-        normalized.replace("_", "-")
-        .replace(" ", "-")
-        .replace("<", "-")
-        .replace(">", "-")
-        .split("-")
+    pairs = list(zip(words, words[1:]))
+    triples = list(zip(words, words[1:], words[2:]))
+    return (
+        ("not", "specified") in pairs
+        or ("to", "be", "determined") in triples
+        or ("to", "be", "decided") in triples
     )
-    return "placeholder" in words
 
 
 def _has_placeholder(value: object) -> bool:
@@ -229,7 +226,10 @@ def _has_placeholder(value: object) -> bool:
     if isinstance(value, list):
         return any(_has_placeholder(item) for item in value)
     if isinstance(value, dict):
-        return any(_has_placeholder(item) for item in value.values())
+        return any(
+            key != "state" and _has_placeholder(item)
+            for key, item in value.items()
+        )
     return False
 
 

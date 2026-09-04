@@ -10,6 +10,48 @@ isolation anyway. The runner remains responsible for withholding hidden criteria
 specs, prior answers, and reports. Historical outside-read facts below are retained
 as provenance only and no longer define current eligibility.
 
+## 2026-09-05 bounded fresh verification
+
+One fresh `gpt-5.6-terra` / `medium` / `fork_turns:none` response was sampled for
+each DVC case without exposing the expectation catalog. DVC-01 through DVC-06,
+DVC-08, and DVC-10 matched their case criteria on inspection. DVC-07 returned an
+implementation clarification instead of a pending delta; DVC-09 classified the
+change as global but collapsed style, camera, UI, and affected targets into one
+representative row. No evaluator called ImageGen or modified the repository.
+
+Two targeted wording regressions were added with deterministic RED-GREEN tests.
+DVC-09 then expanded to distinct style, camera, and UI rows and affected-target
+entries. DVC-07's first retest still announced re-entry in prose only; after making
+pending placeholders and the no-prose-only rule explicit, its final retest emitted
+the complete local delta, blocked boss work, and kept save-menu and town-audio work
+continuing.
+
+The deterministic scorer returned `PASS` with every criterion for both final
+affected-case answers against installable-skill manifest
+`43478c2291815abc206e2f21d2446cc7219f61fff600db8d608c2259af5c0aa4`:
+
+| Case | Answer SHA-256 | Trace SHA-256 | Result |
+| --- | --- | --- | --- |
+| DVC-07 | `30fd8e34c8d573adea63ecc524c2838a6f1e3ca3d987e7e4a6ca864417b08629` | `23acd8e932659b94a0ebc688f92c3479124bf823dfdd0552c46a308f86e64169` | PASS, 17/17 criteria |
+| DVC-09 | `d2073ac941dc7b798ed2433abbc06aeeb06475891c91705b3ff4f4f2e5db7cbb` | `3e3ff34261943318df407f42090dae2f401763420bf35e44efb5eef5fd160644` | PASS, 17/17 criteria |
+
+This is bounded regression evidence, not a new statistical 50-session matrix.
+
+The fresh answers also exposed a deterministic authorization gap: agents commonly
+used `unspecified`, `PENDING_*`, and `*-PLACEHOLDER-*`, while the validator detected
+only exact `<required-value>`. A RED regression proved all such markers could reach
+authorization. Placeholder detection now accepts them in pending decisions but
+rejects them before generation authorization, including indexed
+`<required-value:label>` identities.
+
+A final deterministic contradiction audit found that a delta could also reach
+authorization with duplicate target IDs, a target marked both preserved and
+affected, overlapping blocked/continuing work, or an affected replacement that did
+not match the plan supersession. RED regressions reproduced all five cases. Decision
+validation now rejects them before approval can become generation authority, and
+authorization rejects placeholders anywhere in the complete decision rather than
+only inside `reference_plan`.
+
 ## Final pragmatic acceptance cutoff
 
 On 2026-08-21 the user explicitly stopped further probabilistic evaluator spend.

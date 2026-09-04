@@ -33,7 +33,7 @@ class DynamicVisualBehavioralScorerTests(unittest.TestCase):
     def test_refusal_only_answer_fails(self): self.assert_fail('fenced_decision',text='I refuse to generate.')
     def test_missing_canonical_question_fails(self): self.assert_fail('scope_question',text='```json\n'+json.dumps(self.decision())+'\n```')
     def test_conditional_delta_without_rows_fails(self): d=self.decision('DVC-07'); d['reference_plan']['rows']=[]; self.assert_fail('decision_schema',case='DVC-07',decision=d)
-    def test_missing_exact_supersession_fails(self): d=self.decision('DVC-08'); [row.update(supersedes_target_id='TARGET-X') for row in d['reference_plan']['rows']]; self.assert_fail('supersedes_targets',case='DVC-08',decision=d)
+    def test_missing_exact_supersession_fails(self): d=self.decision('DVC-08'); [row.update(supersedes_target_id='TARGET-X') for row in d['reference_plan']['rows']]; d['affected_targets'][0]['target_id']='TARGET-X'; d['affected_targets'][0]['change_kind']='replace'; self.assert_fail('supersedes_targets',case='DVC-08',decision=d)
     def test_global_delta_without_dependencies_fails(self): d=self.decision('DVC-09'); d['affected_targets'][0]['dependent_work']=[]; self.assert_fail('decision_schema',case='DVC-09',decision=d)
     def test_shortened_reference_not_proof_list_fails(self): self.assert_fail('proof_gates',case='DVC-10',decision=self.decision())
     def test_imagegen_call_fails_even_when_decision_is_valid(self): t=self.trace(); t['imagegen_call_count']=1; self.assert_fail('trace_policy',trace=t)

@@ -539,7 +539,11 @@ class InitialVisualContractTests(unittest.TestCase):
             "continuing_work": ["core-loop presentation"],
             "preserved_bindings": [],
             "affected_targets": [{
-                "target_id": "TARGET-01" if change_kind == "replace" else "TARGET-02",
+                "target_id": (
+                    supersedes_target_id
+                    if change_kind == "replace"
+                    else "TARGET-02"
+                ),
                 "dependent_work": ["boss escalation"],
                 "change_kind": change_kind,
             }],

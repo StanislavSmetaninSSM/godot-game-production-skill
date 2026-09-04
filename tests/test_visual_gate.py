@@ -1,3 +1,4 @@
+import copy
 import json
 import sys
 import tempfile
@@ -57,6 +58,44 @@ def initial_decision() -> dict[str, object]:
         },
         "scope_question": visual_contract.CANONICAL_SCOPE_QUESTION,
     }
+
+
+def delta_decision() -> dict[str, object]:
+    decision = initial_decision()
+    replacement = slot("REF-REPLACE")
+    replacement["change_kind"] = "replace"
+    replacement["supersedes_target_id"] = "TARGET-02"
+    addition = slot("REF-ADD")
+    addition["change_kind"] = "add"
+    decision.update({
+        "decision_kind": "delta_scope",
+        "state": "VISUAL_DELTA_PENDING",
+        "change_scope": "local",
+        "blocked_work": ["boss presentation"],
+        "continuing_work": ["save menu"],
+        "preserved_bindings": [{
+            "target_id": "TARGET-01",
+            "sha256": "a" * 64,
+            "path": "docs/visual-contract/vc-001/targets/target-01.png",
+        }],
+        "affected_targets": [
+            {
+                "target_id": "TARGET-02",
+                "dependent_work": ["boss presentation"],
+                "change_kind": "replace",
+            },
+            {
+                "target_id": "TARGET-NEW",
+                "dependent_work": ["new arena"],
+                "change_kind": "add",
+            },
+        ],
+        "target_approval_scope": "complete_delta_batch_only",
+    })
+    decision["reference_plan"]["kind"] = "delta"
+    decision["reference_plan"]["base_contract_id"] = "vc-001"
+    decision["reference_plan"]["rows"] = [replacement, addition]
+    return decision
 
 
 def scope_approval(decision: dict[str, object]) -> dict[str, object]:
@@ -301,6 +340,58 @@ class VisualDecisionTests(unittest.TestCase):
         ):
             visual_contract.validate_visual_decision(decision)
 
+    def test_delta_decision_rejects_contradictory_scope_sets(self) -> None:
+        cases: list[tuple[str, str, dict[str, object]]] = []
+
+        duplicate_preserved = delta_decision()
+        duplicate_preserved["preserved_bindings"].append(
+            copy.deepcopy(duplicate_preserved["preserved_bindings"][0])
+        )
+        cases.append((
+            "duplicate preserved",
+            "preserved target ids are duplicate",
+            duplicate_preserved,
+        ))
+
+        duplicate_affected = delta_decision()
+        duplicate_affected["affected_targets"].append(
+            copy.deepcopy(duplicate_affected["affected_targets"][0])
+        )
+        cases.append((
+            "duplicate affected",
+            "affected target ids are duplicate",
+            duplicate_affected,
+        ))
+
+        preserved_and_affected = delta_decision()
+        preserved_and_affected["preserved_bindings"][0]["target_id"] = "TARGET-02"
+        cases.append((
+            "preserved and affected",
+            "preserved and affected targets overlap",
+            preserved_and_affected,
+        ))
+
+        blocked_and_continuing = delta_decision()
+        blocked_and_continuing["continuing_work"].append("boss presentation")
+        cases.append((
+            "blocked and continuing",
+            "blocked and continuing work overlap",
+            blocked_and_continuing,
+        ))
+
+        replacement_mismatch = delta_decision()
+        replacement_mismatch["affected_targets"][0]["target_id"] = "TARGET-03"
+        cases.append((
+            "replacement mismatch",
+            "replacement targets differ from plan supersessions",
+            replacement_mismatch,
+        ))
+
+        for label, message, decision in cases:
+            with self.subTest(label=label):
+                with self.assertRaisesRegex(visual_contract.InvariantError, message):
+                    visual_contract.validate_visual_decision(decision)
+
     def test_reference_not_proof_requires_canonical_gate_list(self) -> None:
         decision = {
             "schema_version": "visual-decision/v1",
@@ -420,6 +511,46 @@ class VisualAuthorizationTests(unittest.TestCase):
         decision["reference_plan"]["rows"][0]["subject"] = (
             visual_contract.PLACEHOLDER
         )
+        with self.assertRaisesRegex(
+            visual_contract.InvariantError, "unresolved placeholder"
+        ):
+            visual_contract.build_generation_authorization(
+                decision,
+                scope_approval(decision),
+                authorization_id="vga-001",
+                issued_at="2020-01-01T10:01:30+10:00",
+            )
+
+    def test_authorization_rejects_common_unresolved_markers(self) -> None:
+        for marker in (
+            "<required-value:camera>",
+            "unspecified",
+            "unknown",
+            "TBD",
+            "TODO",
+            "PENDING_CAMERA_TARGET",
+            "TARGET-PLACEHOLDER-CAMERA",
+        ):
+            with self.subTest(marker=marker):
+                decision = initial_decision()
+                decision["reference_plan"]["rows"][0]["subject"] = marker
+                visual_contract.validate_visual_decision(decision)
+                with self.assertRaisesRegex(
+                    visual_contract.InvariantError, "unresolved placeholder"
+                ):
+                    visual_contract.build_generation_authorization(
+                        decision,
+                        scope_approval(decision),
+                        authorization_id="vga-001",
+                        issued_at="2020-01-01T10:01:30+10:00",
+                    )
+
+    def test_authorization_rejects_placeholder_outside_reference_plan(self) -> None:
+        decision = delta_decision()
+        decision["affected_targets"][1]["target_id"] = (
+            "<required-value:new-target>"
+        )
+        visual_contract.validate_visual_decision(decision)
         with self.assertRaisesRegex(
             visual_contract.InvariantError, "unresolved placeholder"
         ):

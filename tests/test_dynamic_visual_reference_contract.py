@@ -131,6 +131,34 @@ class DynamicVisualReferenceContractTests(unittest.TestCase):
             ),
         )
 
+    def test_main_skill_opens_late_visual_delta_before_implementation_questions(self) -> None:
+        required = (
+            "missing or changed player-visible state",
+            "complete `delta_scope` decision before any implementation-detail question or game change",
+            "unresolved presentation details stay as pending placeholders",
+            "Never announce or reopen a visual delta in prose only",
+            "missing base contract or target identity uses `<required-value>`",
+            "stated independent work in `continuing_work`",
+        )
+        for path in (
+            "godot-game-production/SKILL.md",
+            "godot-game-production/references/visual-contract.md",
+        ):
+            assert_contains_all(self, read(path), required)
+
+    def test_global_delta_cannot_hide_questions_or_targets_in_one_catch_all(self) -> None:
+        required = (
+            "one independently useful visual question per row",
+            "never one representative or catch-all row",
+            "one `affected_targets` entry per affected target",
+            "distinct placeholder identities",
+        )
+        for path in (
+            "godot-game-production/SKILL.md",
+            "godot-game-production/references/visual-contract.md",
+        ):
+            assert_contains_all(self, read(path), required)
+
     def test_visual_contract_documents_all_machine_schemas(self) -> None:
         text = read("godot-game-production/references/visual-contract.md")
         assert_contains_all(

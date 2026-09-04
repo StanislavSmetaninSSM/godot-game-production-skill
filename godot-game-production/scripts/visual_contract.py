@@ -196,8 +196,35 @@ def _text_list(
     return value
 
 
+def _is_placeholder_text(value: str) -> bool:
+    normalized = value.strip().casefold()
+    if normalized in {
+        PLACEHOLDER,
+        "unspecified",
+        "not specified",
+        "unknown",
+        "tbd",
+        "todo",
+        "to be determined",
+        "to be decided",
+    }:
+        return True
+    if normalized.startswith("<required-value:") and normalized.endswith(">"):
+        return True
+    if normalized.startswith(("pending_", "pending-", "pending ")):
+        return True
+    words = (
+        normalized.replace("_", "-")
+        .replace(" ", "-")
+        .replace("<", "-")
+        .replace(">", "-")
+        .split("-")
+    )
+    return "placeholder" in words
+
+
 def _has_placeholder(value: object) -> bool:
-    if value == PLACEHOLDER:
+    if isinstance(value, str) and _is_placeholder_text(value):
         return True
     if isinstance(value, list):
         return any(_has_placeholder(item) for item in value)
@@ -319,19 +346,38 @@ def validate_visual_decision(value: object) -> dict[str, object]:
         _invariant(value["change_scope"] in {"local", "global"}, "delta scope differs")
         plan = validate_reference_plan(value["reference_plan"], allow_placeholders=True)
         _invariant(plan["kind"] == "delta", "delta decision uses an initial plan")
-        _text_list(value["blocked_work"], "blocked_work", allow_empty=True)
-        _text_list(value["continuing_work"], "continuing_work", allow_empty=True)
+        blocked_work = _text_list(
+            value["blocked_work"], "blocked_work", allow_empty=True
+        )
+        continuing_work = _text_list(
+            value["continuing_work"], "continuing_work", allow_empty=True
+        )
+        _invariant(
+            not ({item.strip() for item in blocked_work}
+                 & {item.strip() for item in continuing_work}),
+            "blocked and continuing work overlap",
+        )
         _schema(isinstance(value["preserved_bindings"], list), "preserved_bindings must be a list")
+        preserved_target_ids: list[str] = []
         for binding in value["preserved_bindings"]:
             _schema(isinstance(binding, dict) and set(binding) == PRESERVED_BINDING_FIELDS, "preserved binding fields differ")
-            _text(binding["target_id"], "preserved target_id")
+            preserved_target_ids.append(
+                _text(binding["target_id"], "preserved target_id").strip()
+            )
             _invariant(is_portable_relative_path(binding["path"]), "preserved path is not portable")
             _invariant(binding["sha256"] == PLACEHOLDER or is_sha256(binding["sha256"]), "preserved SHA-256 is malformed")
+        _invariant(
+            len(preserved_target_ids) == len(set(preserved_target_ids)),
+            "preserved target ids are duplicate",
+        )
         _schema(isinstance(value["affected_targets"], list), "affected_targets must be a list")
         _invariant(bool(value["affected_targets"]), "affected_targets is empty")
+        affected_target_ids: list[str] = []
+        affected_replacement_ids: set[str] = set()
         for target in value["affected_targets"]:
             _schema(isinstance(target, dict) and set(target) == AFFECTED_TARGET_FIELDS, "affected target fields differ")
-            _text(target["target_id"], "affected target_id")
+            target_id = _text(target["target_id"], "affected target_id").strip()
+            affected_target_ids.append(target_id)
             _text_list(target["dependent_work"], "affected dependent_work")
             _schema(
                 isinstance(target["change_kind"], str),
@@ -341,6 +387,25 @@ def validate_visual_decision(value: object) -> dict[str, object]:
                 target["change_kind"] in {"add", "replace"},
                 "affected change_kind differs",
             )
+            if target["change_kind"] == "replace":
+                affected_replacement_ids.add(target_id)
+        _invariant(
+            len(affected_target_ids) == len(set(affected_target_ids)),
+            "affected target ids are duplicate",
+        )
+        _invariant(
+            not (set(preserved_target_ids) & set(affected_target_ids)),
+            "preserved and affected targets overlap",
+        )
+        plan_replacement_ids = {
+            row["supersedes_target_id"].strip()
+            for row in plan["rows"]
+            if row["change_kind"] == "replace"
+        }
+        _invariant(
+            plan_replacement_ids == affected_replacement_ids,
+            "replacement targets differ from plan supersessions",
+        )
         _invariant(value["target_approval_scope"] == "complete_delta_batch_only", "target approval scope differs")
         _invariant(value["scope_question"] == CANONICAL_SCOPE_QUESTION, "scope question differs")
     else:
@@ -493,6 +558,7 @@ def build_generation_authorization(
     correction: dict[str, object] | None = None,
 ) -> dict[str, object]:
     validate_visual_decision(decision)
+    _invariant(not _has_placeholder(decision), "unresolved placeholder")
     plan = validate_reference_plan(decision["reference_plan"], allow_placeholders=False)
     validate_scope_approval(approval, decision)
     _text(authorization_id, "authorization id")

@@ -171,6 +171,19 @@ Late re-entry is required when Codex finds a visual decision that cannot be deri
 from the active approved targets without making a material new art-direction
 choice.
 
+A missing or changed player-visible state in an approved production is itself
+sufficient to reopen the gate. Codex emits the complete pending delta before an
+implementation-detail question or game change; it never announces the re-entry in
+prose only. Unknown base or target identities and unresolved presentation details
+remain explicit pending placeholders, while stated independent work is recorded as
+continuing work.
+
+Pending text or identity placeholders use `<required-value>` or a distinct indexed
+`<required-value:label>` form. Authorization also rejects common natural-language
+unresolved markers (`unspecified`, `unknown`, `TBD`, `TODO`, `PENDING_*`, or a
+`PLACEHOLDER` token) anywhere in the complete decision, so pending prose outside
+the reference plan cannot silently become generation authority.
+
 Codex records the missing information, affected tasks or slices, classification as
 an addition or replacement, and a delta plan. Only dependent work enters
 `VISUAL_DELTA_PENDING`. Independent work may continue. The blocked scope may
@@ -191,9 +204,20 @@ An approved delta:
 - produces a new active contract version;
 - unblocks only work covered by the approved delta.
 
+Within a delta, preserved target IDs and affected target IDs are unique and
+disjoint; blocked and continuing work are disjoint; and the affected replacement
+set exactly matches the plan's named supersessions. These invariants are checked
+before generation authorization rather than deferred to final evidence review.
+
 If the change affects global visual grammar, including the primary art style,
 canonical gameplay camera, or shared UI language, Codex expands the affected target
 set accordingly. A nominally local delta cannot hide a global revision.
+
+Global expansion keeps one independently useful visual question per row and one
+affected-target entry per affected target. A representative or catch-all row or
+target cannot combine non-combinable style, camera, UI, or other questions. When
+exact target IDs are unavailable, distinct placeholder identities preserve the
+required cardinality until the real bindings are known.
 
 ## Evidence model and schema break
 

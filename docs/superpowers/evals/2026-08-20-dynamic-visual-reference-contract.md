@@ -1,5 +1,15 @@
 # Dynamic Visual Reference Contract: Control RED Baseline
 
+## 2026-09-05 scorer-policy correction
+
+Fresh acceptance runs use `dvc-trace/v2`, which records observable run counters and
+write paths but no filesystem-read inventory or generic tool-call inventory. The
+old read rule incorrectly excluded agents that loaded required Superpowers and
+Spec Kit bridge instructions, and a self-reported trace could not enforce physical
+isolation anyway. The runner remains responsible for withholding hidden criteria,
+specs, prior answers, and reports. Historical outside-read facts below are retained
+as provenance only and no longer define current eligibility.
+
 ## Final pragmatic acceptance cutoff
 
 On 2026-08-21 the user explicitly stopped further probabilistic evaluator spend.

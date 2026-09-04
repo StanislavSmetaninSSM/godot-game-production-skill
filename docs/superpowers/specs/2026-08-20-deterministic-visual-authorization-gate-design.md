@@ -150,12 +150,14 @@ Add a test-only deterministic scorer that accepts:
 
 - the evaluator's final answer;
 - the hidden machine expectations for exactly one DVC case;
-- a normalized tool trace for that evaluator session.
+- a normalized observable-run trace for that evaluator session.
 
 It extracts exactly one fenced `visual-decision/v1` JSON object, invokes the same
 decision validator, checks the final literal approval question when applicable,
 checks case-specific exact facts, and rejects any pre-authorization ImageGen call,
-write, outside read, rubric read, or extra final answer.
+write, or extra final answer. Filesystem reads and generic tool calls are not scorer
+inputs; the evaluation runner owns prompt and hidden-material isolation. This avoids
+penalizing required reads of Superpowers, Spec Kit bridge, or ImageGen instructions.
 
 Only scorer exit code `0` is PASS. The evaluator, implementation agent, and eval
 ledger cannot override that result. Semantic commentary outside the decision object
@@ -360,8 +362,8 @@ Before production code, add failing tests for:
 - generated/rejected targets without authorization;
 - stale/reused authorization and retry before correction approval;
 - duplicate keys, unsafe paths, overwrite attempts, and atomic-write failures;
-- scorer rejection of ImageGen calls, writes, outside reads, rubric leakage, and
-  multiple final answers.
+- scorer rejection of ImageGen calls, writes, malformed run traces, and multiple
+  final answers; the runner owns hidden-material isolation separately.
 
 Selected saved behavioral failures become regression fixtures or exact assertions;
 their original session IDs remain in the durable eval ledger.

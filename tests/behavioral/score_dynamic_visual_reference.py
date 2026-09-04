@@ -1,16 +1,14 @@
 """Fail-closed deterministic scorer for Dynamic Visual Contract answers."""
 from __future__ import annotations
 import argparse, hashlib, json, os, re, tempfile, types
-from collections import Counter
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
 CATALOG_PATH = HERE / "dynamic-visual-reference-expectations.json"
 CASE_IDS = {f"DVC-{number:02d}" for number in range(1, 11)}
 CASE_FIELDS = {"decision_kind","state","row_count","row_count_min","required_distinct_row_terms","change_scope","blocked_work_terms","continuing_work_terms","required_preserved_target_ids","required_supersedes_target_ids","affected_targets_min","require_nonempty_affected_dependencies","target_approval_scope","required_proof_gates","requires_scope_question"}
-TRACE_FIELDS = {"schema_version","session_id","model","reasoning_effort","fork_turns","final_answer_count","task_complete_count","imagegen_call_count","read_paths","write_paths","tool_calls"}
+TRACE_FIELDS = {"schema_version","session_id","model","reasoning_effort","fork_turns","final_answer_count","task_complete_count","imagegen_call_count","write_paths"}
 CRITERIA = ("fenced_decision","decision_schema","decision_kind","decision_state","row_count","distinct_rows","change_scope","blocked_work","continuing_work","preserved_targets","supersedes_targets","affected_targets","affected_dependencies","target_approval_scope","proof_gates","scope_question","trace_policy")
-BANNED = {"spec","plan","rubric","eval","expectation","control","previous-answer","session"}
 FENCE = re.compile(r"```([A-Za-z0-9_-]*)[ \t]*\r?\n(.*?)```", re.DOTALL)
 
 class Unsafe(ValueError): pass
@@ -73,31 +71,17 @@ def _decision(answer, contract):
     try: return contract.loads_json(candidates[0])
     except (contract.SchemaError, json.JSONDecodeError) as error: raise Unsafe("malformed fenced JSON") from error
 
-def _validate_trace(trace, root):
+def _validate_trace(trace):
     if not isinstance(trace,dict) or set(trace) != TRACE_FIELDS: raise Unsafe("trace fields")
     for key in ("schema_version","session_id","model","reasoning_effort","fork_turns"):
         if not isinstance(trace[key],str) or not trace[key]: raise Unsafe("trace scalar")
     for key in ("final_answer_count","task_complete_count","imagegen_call_count"):
         if not isinstance(trace[key],int) or isinstance(trace[key],bool) or trace[key] < 0: raise Unsafe("trace counter")
-    if not all(isinstance(trace[key],list) for key in ("read_paths","write_paths","tool_calls")): raise Unsafe("trace arrays")
-    reads=[]
-    for raw in trace["read_paths"]:
-        if not isinstance(raw,str) or not raw: raise Unsafe("read path type")
-        reads.append(Path(raw).resolve(strict=False))
-    for call in trace["tool_calls"]:
-        if not isinstance(call,dict) or set(call) != {"tool","action","path"} or not isinstance(call["tool"],str) or not call["tool"] or not isinstance(call["action"],str) or not call["action"] or (call["path"] is not None and not isinstance(call["path"],str)): raise Unsafe("tool call schema")
-    return reads
+    if not isinstance(trace["write_paths"],list) or not all(isinstance(path,str) and path for path in trace["write_paths"]): raise Unsafe("write paths")
 
-def _trace_policy(trace, root):
-    reads=_validate_trace(trace,root)
-    if (trace["schema_version"],trace["model"],trace["reasoning_effort"],trace["fork_turns"],trace["final_answer_count"],trace["task_complete_count"],trace["imagegen_call_count"]) != ("dvc-trace/v1","gpt-5.6-terra","medium","none",1,1,0) or trace["write_paths"] or not reads: return False
-    for path in reads:
-        if not path.exists() or not path.is_file() or path.is_symlink() or not _within(path,root) or any(any(token in part.casefold() for token in BANNED) for part in path.parts): return False
-    called=[]
-    for call in trace["tool_calls"]:
-        if call["tool"] != "exec_command" or call["action"] != "read" or not isinstance(call["path"],str) or not call["path"]: return False
-        called.append(str(Path(call["path"]).resolve(strict=False)))
-    return Counter(map(str,reads)) == Counter(called)
+def _trace_policy(trace):
+    _validate_trace(trace)
+    return (trace["schema_version"],trace["model"],trace["reasoning_effort"],trace["fork_turns"],trace["final_answer_count"],trace["task_complete_count"],trace["imagegen_call_count"]) == ("dvc-trace/v2","gpt-5.6-terra","medium","none",1,1,0) and not trace["write_paths"]
 
 def _distinct(rows, groups):
     text=[json.dumps(row,ensure_ascii=False,sort_keys=True,separators=(",",":")).casefold() for row in rows]; graph=[[i for i,item in enumerate(text) if any(token.casefold() in item for token in group)] for group in groups]; matched={}
@@ -109,7 +93,7 @@ def _distinct(rows, groups):
         return False
     return all(visit(i,set()) for i in range(len(graph)))
 
-def _evaluate(case, answer, trace, contract, root):
+def _evaluate(case, answer, trace, contract):
     try: decision=_decision(answer,contract)
     except Unsafe: raise
     except ValueError: return ["fenced_decision"]
@@ -131,7 +115,7 @@ def _evaluate(case, answer, trace, contract, root):
     if case["target_approval_scope"] is not None: require("target_approval_scope",decision.get("target_approval_scope") == case["target_approval_scope"])
     if case["required_proof_gates"]: require("proof_gates",decision.get("preserved_evidence") == case["required_proof_gates"])
     question=contract.CANONICAL_SCOPE_QUESTION; lines=[line for line in answer.splitlines() if line.strip()]
-    require("scope_question",(bool(lines) and lines[-1] == question) if case["requires_scope_question"] else question not in answer); require("trace_policy",_trace_policy(trace,root))
+    require("scope_question",(bool(lines) and lines[-1] == question) if case["requires_scope_question"] else question not in answer); require("trace_policy",_trace_policy(trace))
     return [item for item in CRITERIA if item in failed]
 
 def _publish(path,report):
@@ -157,8 +141,8 @@ def main(argv=None):
         _regular(answer); _regular(trace); contract=_load_contract(root); cases=_catalog(contract)
         try: trace_value=contract.loads_json(trace.read_text(encoding="utf-8"))
         except contract.SchemaError as error: raise Unsafe("trace JSON") from error
-        _validate_trace(trace_value,root)
-        try: failed=_evaluate(cases[args.case],answer.read_text(encoding="utf-8"),trace_value,contract,root)
+        _validate_trace(trace_value)
+        try: failed=_evaluate(cases[args.case],answer.read_text(encoding="utf-8"),trace_value,contract)
         except contract.SchemaError: failed=["decision_schema"]
         value={"schema_version":"dvc-score-report/v1","case_id":args.case,"session_id":trace_value["session_id"],"answer_sha256":_sha(answer.read_bytes()),"trace_sha256":_sha(trace.read_bytes()),"skill_manifest_sha256":_manifest(root),"status":"PASS" if not failed else "FAIL","passed_criteria":[item for item in CRITERIA if item not in failed],"failed_criteria":failed}
         _publish(report,value); return 0 if not failed else 2

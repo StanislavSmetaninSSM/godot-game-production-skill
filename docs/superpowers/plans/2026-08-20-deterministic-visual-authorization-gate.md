@@ -1,5 +1,10 @@
 # Deterministic Visual Authorization Gate Implementation Plan
 
+> **Superseded scorer detail (2026-09-05):** The `dvc-trace/v1` read inventory
+> and outside-read steps in this completed historical plan are replaced by
+> `docs/superpowers/specs/2026-09-05-behavioral-scorer-observable-policy-design.md`
+> and its `dvc-trace/v2` contract. Historical run records below remain unchanged.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Make visual decision PASS and ImageGen authorization deterministic so an agent cannot self-award success or register an unapproved generated target.

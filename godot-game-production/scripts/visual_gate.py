@@ -20,6 +20,10 @@ def _parser() -> argparse.ArgumentParser:
     check = commands.add_parser("check-decision")
     check.add_argument("--decision", required=True)
     check.add_argument("--report", required=True)
+    for command in ("present-decision", "present-target-question"):
+        present = commands.add_parser(command)
+        present.add_argument("--decision", required=True)
+        present.add_argument("--report", required=True)
     authorize = commands.add_parser("authorize-generation")
     authorize.add_argument("--decision", required=True)
     authorize.add_argument("--approval", required=True)
@@ -84,6 +88,31 @@ def _load_json_file(path: Path) -> object:
     if not path.is_file():
         raise OSError("input is not a regular file")
     return visual_contract.loads_json(path.read_text(encoding="utf-8"))
+
+
+def _present(args: argparse.Namespace, *, target_question: bool) -> int:
+    decision_path = Path(args.decision).resolve()
+    report_path = Path(args.report).resolve()
+    if decision_path == report_path:
+        return 3
+    try:
+        decision = _load_json_file(decision_path)
+        report = _load_json_file(report_path)
+        if target_question:
+            rendered = visual_contract.render_target_question(decision, report)
+        else:
+            rendered = visual_contract.render_decision_presentation(
+                decision, report
+            )
+    except (
+        OSError,
+        UnicodeError,
+        json.JSONDecodeError,
+        visual_contract.SchemaError,
+    ):
+        return 3
+    sys.stdout.write(rendered + "\n")
+    return 0
 
 
 def _authorize_generation(args: argparse.Namespace) -> int:
@@ -151,6 +180,10 @@ def main(argv: Sequence[str] | None = None) -> int:
         return 3
     if args.command == "check-decision":
         return _check_decision(args)
+    if args.command == "present-decision":
+        return _present(args, target_question=False)
+    if args.command == "present-target-question":
+        return _present(args, target_question=True)
     if args.command == "authorize-generation":
         return _authorize_generation(args)
     return 3

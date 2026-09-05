@@ -1,4 +1,6 @@
 import copy
+import contextlib
+import io
 import json
 import sys
 import tempfile
@@ -33,6 +35,17 @@ def slot(slot_id: str = "REF-01") -> dict[str, object]:
         "sound_cue": "interaction confirmation",
         "dependent_work": ["core-loop presentation"],
         "rationale": "No approved target resolves this composition.",
+        "presentation": {
+            "title": "Исследование игровой локации",
+            "image_description": (
+                "Игровой вид сбоку: персонаж движется по комнате между "
+                "препятствиями; в кадре видны рабочая дистанция камеры, "
+                "окружение, HUD и эффект взаимодействия"
+            ),
+            "purpose": (
+                "Референс нужен для утверждения основной игровой композиции"
+            ),
+        },
         "image_count": 1,
         "change_kind": "initial",
         "supersedes_target_id": None,
@@ -41,7 +54,7 @@ def slot(slot_id: str = "REF-01") -> dict[str, object]:
 
 def initial_decision() -> dict[str, object]:
     return {
-        "schema_version": "visual-decision/v1",
+        "schema_version": "visual-decision/v2",
         "decision_id": str(uuid.UUID("11111111-1111-1111-1111-111111111111")),
         "builder_id": "codex-builder",
         "created_at": "2020-01-01T10:00:00+10:00",
@@ -56,7 +69,46 @@ def initial_decision() -> dict[str, object]:
             "rows": [slot()],
             "approval": None,
         },
-        "scope_question": visual_contract.CANONICAL_SCOPE_QUESTION,
+        "user_interface": {
+            "language": "ru",
+            "scope_question": (
+                "Подтверждаете именно этот набор изображений для генерации?"
+            ),
+            "target_question": (
+                "Подтверждаете именно этот показанный набор изображений?"
+            ),
+        },
+    }
+
+
+def proof_decision() -> dict[str, object]:
+    return {
+        "schema_version": "visual-decision/v2",
+        "decision_id": "22222222-2222-2222-2222-222222222222",
+        "builder_id": "codex-builder",
+        "created_at": "2020-01-01T10:00:00+10:00",
+        "decision_kind": "reference_not_proof",
+        "state": "UNCHANGED",
+        "generation_status": "not_authorized",
+        "verdict": "rejected",
+        "preserved_evidence": list(visual_contract.CANONICAL_PROOF_GATES),
+        "user_interface": {
+            "language": "ru",
+            "message": (
+                "Этот визуальный референс задаёт направление, но не заменяет "
+                "проверку работающей игры и релизные доказательства."
+            ),
+        },
+    }
+
+
+def decision_report(decision: dict[str, object]) -> dict[str, object]:
+    return {
+        "schema_version": "visual-decision-report/v1",
+        "decision_id": decision["decision_id"],
+        "decision_sha256": visual_contract.canonical_sha256(decision),
+        "status": "VALID_PENDING",
+        "errors": [],
     }
 
 
@@ -146,6 +198,108 @@ def correction_approval() -> dict[str, object]:
 
 
 class VisualDecisionTests(unittest.TestCase):
+    def test_v2_renders_localized_numbered_scope_in_plan_order(self) -> None:
+        decision = initial_decision()
+        second = slot("REF-02")
+        second["presentation"] = {
+            "title": "Поражение персонажа",
+            "image_description": (
+                "Та же локация в момент получения урона: персонажа отбрасывает "
+                "назад, опасность хорошо читается, а поверх сцены появляется "
+                "экран повторной попытки"
+            ),
+            "purpose": (
+                "Референс определяет визуальную подачу поражения и возврата в игру"
+            ),
+        }
+        decision["reference_plan"]["rows"].append(second)
+
+        rendered = visual_contract.render_decision_presentation(
+            decision, decision_report(decision)
+        )
+
+        self.assertEqual(
+            rendered,
+            "1) Исследование игровой локации. Игровой вид сбоку: персонаж "
+            "движется по комнате между препятствиями; в кадре видны рабочая "
+            "дистанция камеры, окружение, HUD и эффект взаимодействия. "
+            "Референс нужен для утверждения основной игровой композиции.\n\n"
+            "2) Поражение персонажа. Та же локация в момент получения урона: "
+            "персонажа отбрасывает назад, опасность хорошо читается, а поверх "
+            "сцены появляется экран повторной попытки. Референс определяет "
+            "визуальную подачу поражения и возврата в игру.\n\n"
+            "Подтверждаете именно этот набор изображений для генерации?",
+        )
+
+    def test_v1_decision_is_rejected(self) -> None:
+        decision = initial_decision()
+        decision["schema_version"] = "visual-decision/v1"
+        with self.assertRaisesRegex(
+            visual_contract.InvariantError, "schema version"
+        ):
+            visual_contract.validate_visual_decision(decision)
+
+    def test_presentation_rejects_placeholders_and_technical_ids(self) -> None:
+        for field, value in (
+            ("title", "REF-01"),
+            ("image_description", "<required-value:image>"),
+            ("purpose", "TARGET-07"),
+        ):
+            with self.subTest(field=field):
+                decision = initial_decision()
+                decision["reference_plan"]["rows"][0]["presentation"][field] = value
+                with self.assertRaises(visual_contract.InvariantError):
+                    visual_contract.validate_visual_decision(decision)
+
+    def test_russian_interface_rejects_old_english_question(self) -> None:
+        decision = initial_decision()
+        decision["user_interface"]["scope_question"] = (
+            "Do you exactly approve the proposed reference slot ID set?"
+        )
+        with self.assertRaisesRegex(
+            visual_contract.InvariantError, "language"
+        ):
+            visual_contract.validate_visual_decision(decision)
+
+    def test_decision_report_must_bind_decision_hash(self) -> None:
+        decision = initial_decision()
+        report = decision_report(decision)
+        report["decision_sha256"] = "a" * 64
+        with self.assertRaisesRegex(
+            visual_contract.InvariantError, "report.*hash"
+        ):
+            visual_contract.render_decision_presentation(decision, report)
+
+    def test_english_target_question_and_russian_proof_message_render(self) -> None:
+        decision = initial_decision()
+        decision["user_interface"] = {
+            "language": "en",
+            "scope_question": "Do you approve this exact image set for generation?",
+            "target_question": "Do you approve this exact displayed image set?",
+        }
+        decision["reference_plan"]["rows"][0]["presentation"] = {
+            "title": "Exploring the game location",
+            "image_description": (
+                "Side-view gameplay with the character crossing the room between "
+                "obstacles, with camera distance, environment, HUD, and the "
+                "interaction effect visible"
+            ),
+            "purpose": "The reference settles the primary gameplay composition",
+        }
+        self.assertEqual(
+            visual_contract.render_target_question(
+                decision, decision_report(decision)
+            ),
+            "Do you approve this exact displayed image set?",
+        )
+        proof = proof_decision()
+        self.assertEqual(
+            visual_contract.render_decision_presentation(
+                proof, decision_report(proof)
+            ),
+            proof["user_interface"]["message"],
+        )
+
     def test_array_discriminators_fail_closed_as_schema_errors(self) -> None:
         cases: list[tuple[str, dict[str, object]]] = []
 
@@ -270,14 +424,6 @@ class VisualDecisionTests(unittest.TestCase):
                 ):
                     visual_contract.validate_visual_decision(decision)
 
-    def test_canonical_scope_question_is_exact(self) -> None:
-        decision = initial_decision()
-        decision["scope_question"] = "Do you approve?"
-        with self.assertRaisesRegex(
-            visual_contract.InvariantError, "scope question"
-        ):
-            visual_contract.validate_visual_decision(decision)
-
     def test_duplicate_json_keys_are_invalid_input(self) -> None:
         with self.assertRaisesRegex(
             visual_contract.SchemaError, "duplicate JSON key: decision_id"
@@ -393,25 +539,86 @@ class VisualDecisionTests(unittest.TestCase):
                     visual_contract.validate_visual_decision(decision)
 
     def test_reference_not_proof_requires_canonical_gate_list(self) -> None:
-        decision = {
-            "schema_version": "visual-decision/v1",
-            "decision_id": "22222222-2222-2222-2222-222222222222",
-            "builder_id": "codex-builder",
-            "created_at": "2020-01-01T10:00:00+10:00",
-            "decision_kind": "reference_not_proof",
-            "state": "UNCHANGED",
-            "generation_status": "not_authorized",
-            "verdict": "rejected",
-            "preserved_evidence": list(
-                visual_contract.CANONICAL_PROOF_GATES
-            ),
-        }
+        decision = proof_decision()
         visual_contract.validate_visual_decision(decision)
         decision["preserved_evidence"].remove("systems/holism")
         with self.assertRaisesRegex(
             visual_contract.InvariantError, "proof gates differ"
         ):
             visual_contract.validate_visual_decision(decision)
+
+
+class VisualGateCliTests(unittest.TestCase):
+    def _write_bound_pair(
+        self, root: Path, decision: dict[str, object]
+    ) -> tuple[Path, Path]:
+        decision_path = root / "decision.json"
+        report_path = root / "decision-report.json"
+        decision_path.write_text(json.dumps(decision), encoding="utf-8")
+        report_path.write_text(
+            json.dumps(decision_report(decision)), encoding="utf-8"
+        )
+        return decision_path, report_path
+
+    def test_present_decision_emits_only_localized_projection(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            decision = initial_decision()
+            decision_path, report_path = self._write_bound_pair(
+                Path(directory), decision
+            )
+            output = io.StringIO()
+            with contextlib.redirect_stdout(output):
+                code = visual_gate.main([
+                    "present-decision",
+                    "--decision", str(decision_path),
+                    "--report", str(report_path),
+                ])
+            self.assertEqual(code, 0)
+            self.assertEqual(
+                output.getvalue().rstrip("\n"),
+                visual_contract.render_decision_presentation(
+                    decision, decision_report(decision)
+                ),
+            )
+            self.assertNotIn("schema_version", output.getvalue())
+            self.assertNotIn("REF-01", output.getvalue())
+
+    def test_present_target_question_uses_decision_language(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            decision = initial_decision()
+            decision_path, report_path = self._write_bound_pair(
+                Path(directory), decision
+            )
+            output = io.StringIO()
+            with contextlib.redirect_stdout(output):
+                code = visual_gate.main([
+                    "present-target-question",
+                    "--decision", str(decision_path),
+                    "--report", str(report_path),
+                ])
+            self.assertEqual(code, 0)
+            self.assertEqual(
+                output.getvalue(),
+                "Подтверждаете именно этот показанный набор изображений?\n",
+            )
+
+    def test_present_decision_fails_silently_on_report_drift(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            decision = initial_decision()
+            decision_path, report_path = self._write_bound_pair(root, decision)
+            report = json.loads(report_path.read_text(encoding="utf-8"))
+            report["decision_sha256"] = "a" * 64
+            report_path.write_text(json.dumps(report), encoding="utf-8")
+            output = io.StringIO()
+            with contextlib.redirect_stdout(output):
+                code = visual_gate.main([
+                    "present-decision",
+                    "--decision", str(decision_path),
+                    "--report", str(report_path),
+                ])
+            self.assertEqual(code, 3)
+            self.assertEqual(output.getvalue(), "")
 
 
 class VisualAuthorizationTests(unittest.TestCase):

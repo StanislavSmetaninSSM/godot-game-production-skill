@@ -10,12 +10,6 @@ from datetime import datetime
 from pathlib import PurePosixPath
 
 
-CANONICAL_SCOPE_QUESTION = (
-    "Do you exactly approve the proposed reference slot ID set?"
-)
-CANONICAL_TARGET_QUESTION = (
-    "Do you exactly approve the displayed target ID set?"
-)
 PLACEHOLDER = "<required-value>"
 CANONICAL_PROOF_GATES = (
     "actual bitmap presentation",
@@ -44,8 +38,13 @@ REFERENCE_SLOT_FIELDS = {
     "reference_slot_id", "target_kind", "subject", "visual_question",
     "coverage", "composition", "motion_cue", "sound_cue",
     "dependent_work", "rationale", "image_count", "change_kind",
-    "supersedes_target_id",
+    "supersedes_target_id", "presentation",
 }
+PRESENTATION_FIELDS = {"title", "image_description", "purpose"}
+SCOPE_USER_INTERFACE_FIELDS = {
+    "language", "scope_question", "target_question",
+}
+PROOF_USER_INTERFACE_FIELDS = {"language", "message"}
 COMPOSITION_FIELDS = {
     "camera", "angle", "environment", "characters", "ui", "vfx",
 }
@@ -57,15 +56,18 @@ COMMON_DECISION_FIELDS = {
     "decision_kind", "state", "generation_status",
 }
 INITIAL_DECISION_FIELDS = COMMON_DECISION_FIELDS | {
-    "reference_plan", "scope_question",
+    "reference_plan", "user_interface",
 }
 DELTA_DECISION_FIELDS = COMMON_DECISION_FIELDS | {
     "change_scope", "reference_plan", "blocked_work", "continuing_work",
     "preserved_bindings", "affected_targets", "target_approval_scope",
-    "scope_question",
+    "user_interface",
 }
 PROOF_DECISION_FIELDS = COMMON_DECISION_FIELDS | {
-    "verdict", "preserved_evidence",
+    "verdict", "preserved_evidence", "user_interface",
+}
+DECISION_REPORT_FIELDS = {
+    "schema_version", "decision_id", "decision_sha256", "status", "errors",
 }
 PRESERVED_BINDING_FIELDS = {"target_id", "sha256", "path"}
 AFFECTED_TARGET_FIELDS = {"target_id", "dependent_work", "change_kind"}
@@ -233,6 +235,110 @@ def _has_placeholder(value: object) -> bool:
     return False
 
 
+def _is_technical_id_only(value: str) -> bool:
+    normalized = value.strip()
+    return bool(
+        re.fullmatch(
+            r"(?:[A-Za-z][A-Za-z0-9_.]*[-_:][A-Za-z0-9_.:-]+|"
+            r"[0-9a-fA-F]{8}(?:-[0-9a-fA-F]{4}){3}-[0-9a-fA-F]{12}|"
+            r"[0-9a-fA-F]{32,64})",
+            normalized,
+        )
+    )
+
+
+def _language(value: object) -> str:
+    language = _text(value, "user interface language").strip()
+    _invariant(
+        re.fullmatch(r"[A-Za-z]{2,8}(?:-[A-Za-z0-9]{1,8})*", language)
+        is not None,
+        "user interface language tag is invalid",
+    )
+    return language
+
+
+def _localized_text(value: object, label: str, language: str) -> str:
+    text = _text(value, label).strip()
+    _invariant(not _has_placeholder(text), f"{label} contains a placeholder")
+    primary = language.split("-", 1)[0].casefold()
+    if primary == "ru":
+        _invariant(
+            re.search(r"[А-Яа-яЁё]", text) is not None,
+            f"{label} does not match user interface language",
+        )
+    elif primary == "en":
+        _invariant(
+            re.search(r"[A-Za-z]", text) is not None,
+            f"{label} does not match user interface language",
+        )
+    return text
+
+
+def _validate_presentation(
+    value: object, *, slot_id: str, language: str | None = None
+) -> dict[str, object]:
+    _schema(
+        isinstance(value, dict) and set(value) == PRESENTATION_FIELDS,
+        "reference slot presentation fields differ",
+    )
+    for field in ("title", "image_description", "purpose"):
+        label = f"reference slot presentation {field}"
+        text = (
+            _localized_text(value[field], label, language)
+            if language is not None
+            else _text(value[field], label).strip()
+        )
+        _invariant(
+            not _has_placeholder(text),
+            f"{label} contains a placeholder",
+        )
+        _invariant(
+            not _is_technical_id_only(text),
+            f"{label} is only a technical ID",
+        )
+        _invariant(
+            slot_id.casefold() not in text.casefold(),
+            f"{label} exposes the reference slot ID",
+        )
+    return value
+
+
+def _validate_scope_user_interface(value: object) -> dict[str, object]:
+    _schema(
+        isinstance(value, dict) and set(value) == SCOPE_USER_INTERFACE_FIELDS,
+        "scope user interface fields differ",
+    )
+    language = _language(value["language"])
+    for field in ("scope_question", "target_question"):
+        question = _localized_text(
+            value[field], f"user interface {field}", language
+        )
+        _invariant(
+            question.endswith(("?", "؟", "？")),
+            f"user interface {field} is not a question",
+        )
+    return value
+
+
+def _validate_proof_user_interface(value: object) -> dict[str, object]:
+    _schema(
+        isinstance(value, dict) and set(value) == PROOF_USER_INTERFACE_FIELDS,
+        "proof user interface fields differ",
+    )
+    language = _language(value["language"])
+    _localized_text(value["message"], "user interface message", language)
+    return value
+
+
+def _validate_plan_language(plan: dict[str, object], language: str) -> None:
+    for row in plan["rows"]:
+        _validate_presentation(
+            row["presentation"],
+            slot_id=row["reference_slot_id"],
+            language=language,
+        )
+
+
 def validate_reference_plan(
     value: object, *, allow_placeholders: bool
 ) -> dict[str, object]:
@@ -280,6 +386,7 @@ def validate_reference_plan(
         )
         for field in COMPOSITION_FIELDS:
             _text(row["composition"][field], f"composition {field}")
+        _validate_presentation(row["presentation"], slot_id=slot_id)
         _invariant(
             isinstance(row["image_count"], int)
             and not isinstance(row["image_count"], bool)
@@ -309,7 +416,7 @@ def validate_reference_plan(
 
 def _validate_common_decision(value: dict[str, object]) -> None:
     _invariant(
-        value["schema_version"] == "visual-decision/v1",
+        value["schema_version"] == "visual-decision/v2",
         "wrong visual decision schema version",
     )
     try:
@@ -338,7 +445,8 @@ def validate_visual_decision(value: object) -> dict[str, object]:
         _invariant(value["generation_status"] == "not_started", "generation started")
         plan = validate_reference_plan(value["reference_plan"], allow_placeholders=True)
         _invariant(plan["kind"] == "initial", "initial decision uses a delta plan")
-        _invariant(value["scope_question"] == CANONICAL_SCOPE_QUESTION, "scope question differs")
+        user_interface = _validate_scope_user_interface(value["user_interface"])
+        _validate_plan_language(plan, user_interface["language"])
     elif decision_kind == "delta_scope":
         _invariant(value["state"] == "VISUAL_DELTA_PENDING", "delta state differs")
         _invariant(value["generation_status"] == "not_started", "generation started")
@@ -407,12 +515,14 @@ def validate_visual_decision(value: object) -> dict[str, object]:
             "replacement targets differ from plan supersessions",
         )
         _invariant(value["target_approval_scope"] == "complete_delta_batch_only", "target approval scope differs")
-        _invariant(value["scope_question"] == CANONICAL_SCOPE_QUESTION, "scope question differs")
+        user_interface = _validate_scope_user_interface(value["user_interface"])
+        _validate_plan_language(plan, user_interface["language"])
     else:
         _invariant(value["state"] == "UNCHANGED", "proof decision state differs")
         _invariant(value["generation_status"] == "not_authorized", "proof decision authorized generation")
         _invariant(value["verdict"] == "rejected", "proof claim was not rejected")
         _invariant(value["preserved_evidence"] == list(CANONICAL_PROOF_GATES), "proof gates differ")
+        _validate_proof_user_interface(value["user_interface"])
     return value
 
 
@@ -424,6 +534,76 @@ def build_decision_report(decision: dict[str, object]) -> dict[str, object]:
         "status": "VALID_PENDING",
         "errors": [],
     }
+
+
+def validate_decision_report(
+    value: object, decision: dict[str, object]
+) -> dict[str, object]:
+    _schema(
+        isinstance(value, dict) and set(value) == DECISION_REPORT_FIELDS,
+        "decision report fields differ",
+    )
+    _invariant(
+        value["schema_version"] == "visual-decision-report/v1",
+        "decision report schema version differs",
+    )
+    _invariant(
+        value["decision_id"] == decision["decision_id"],
+        "decision report decision ID differs",
+    )
+    _invariant(
+        is_sha256(value["decision_sha256"]),
+        "decision report hash is malformed",
+    )
+    _invariant(
+        value["decision_sha256"] == canonical_sha256(decision),
+        "decision report hash differs",
+    )
+    _invariant(value["status"] == "VALID_PENDING", "decision report is not valid pending")
+    _invariant(value["errors"] == [], "decision report contains errors")
+    return value
+
+
+def _sentence(value: str) -> str:
+    text = value.strip()
+    return text if text.endswith((".", "!", "?", "…")) else text + "."
+
+
+def _render_row(index: int, row: dict[str, object]) -> str:
+    presentation = row["presentation"]
+    body = " ".join(
+        _sentence(presentation[key])
+        for key in ("title", "image_description", "purpose")
+    )
+    return f"{index}) {body}"
+
+
+def render_decision_presentation(
+    decision: dict[str, object], report: dict[str, object]
+) -> str:
+    validated = validate_visual_decision(decision)
+    validate_decision_report(report, validated)
+    if validated["decision_kind"] == "reference_not_proof":
+        return validated["user_interface"]["message"].strip()
+    rows = validated["reference_plan"]["rows"]
+    rendered_rows = [
+        _render_row(index, row) for index, row in enumerate(rows, start=1)
+    ]
+    return "\n\n".join(
+        rendered_rows + [validated["user_interface"]["scope_question"].strip()]
+    )
+
+
+def render_target_question(
+    decision: dict[str, object], report: dict[str, object]
+) -> str:
+    validated = validate_visual_decision(decision)
+    validate_decision_report(report, validated)
+    _invariant(
+        validated["decision_kind"] in {"initial_scope", "delta_scope"},
+        "proof decision has no target question",
+    )
+    return validated["user_interface"]["target_question"].strip()
 
 
 def validate_scope_approval(

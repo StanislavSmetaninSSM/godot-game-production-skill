@@ -1,7 +1,12 @@
 # Dynamic Visual Reference Contract
 
 **Date:** 2026-08-20
-**Status:** Approved design; implementation pending
+**Status:** Superseded in part by the 2026-09-05 user-facing visual proposal design
+
+> Needs-derived cardinality and two-stage approval remain active. Any fixed English
+> question or chat-serialized decision described below is obsolete: the active
+> contract stores `visual-decision/v2` in files and renders localized human text as
+> defined in `2026-09-05-user-facing-visual-proposals-design.md`.
 
 ## Decision
 

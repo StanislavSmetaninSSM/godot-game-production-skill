@@ -1,7 +1,13 @@
 # Deterministic Visual Decision and Generation Authorization Gate
 
 **Date:** 2026-08-20
-**Status:** Approved design; implementation pending
+**Status:** Superseded in part by the 2026-09-05 user-facing visual proposal design
+
+> The authorization and hash-binding design below remains historical context, but
+> its `visual-decision/v1`, fenced-JSON chat output, and fixed English question are
+> obsolete. The active implementation uses file-only `visual-decision/v2` plus the
+> localized deterministic renderer defined in
+> `2026-09-05-user-facing-visual-proposals-design.md`.
 
 ## Decision
 

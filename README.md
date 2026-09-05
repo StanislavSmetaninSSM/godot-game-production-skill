@@ -11,6 +11,8 @@ the complete slot set before ImageGen; the deterministic command then issues an
 exact batch authorization. One condition is that one authorized row budgets one generated result.
 A late visual delta repeats the decision and authorization flow, and a correction needs fresh authorization.
 The rule is that unauthorized raw output cannot enter verified evidence or a release result.
+During approval, machine JSON stays in project files. Chat shows detailed,
+numbered image descriptions and approval questions in the user's language.
 
 Important: screenshots are design evidence only. They never prove mechanics. Mechanics require evidence from the target Godot build that shows the input, state change, and outcome, with filmstrip or video evidence where the skill calls for it.
 

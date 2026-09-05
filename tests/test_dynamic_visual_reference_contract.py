@@ -21,13 +21,15 @@ def assert_contains_all(
 
 
 class DynamicVisualReferenceContractTests(unittest.TestCase):
-    def test_main_skill_requires_decision_validation_before_scope_question(self) -> None:
+    def test_main_skill_writes_validates_and_renders_before_scope_approval(self) -> None:
         text = read("godot-game-production/SKILL.md")
         ordered = (
-            "visual-decision/v1",
+            "docs/visual-contract/pending/<decision-id>/decision.json",
             "check-decision",
             "VALID_PENDING",
-            "Do you exactly approve the proposed reference slot ID set?",
+            "present-decision",
+            "copy its stdout verbatim into chat",
+            "explicit full-set approval",
         )
         assert_contains_all(self, text, ordered)
         self.assertEqual(
@@ -35,27 +37,33 @@ class DynamicVisualReferenceContractTests(unittest.TestCase):
             sorted(text.index(value) for value in ordered),
         )
 
-    def test_main_skill_serializes_pending_scope_decision_for_scorer(self) -> None:
+    def test_main_skill_keeps_machine_decisions_out_of_chat(self) -> None:
         text = read("godot-game-production/SKILL.md")
         required = (
-            "exactly one complete validated `visual-decision/v1` object",
-            "`json` fenced code block",
-            "as the final line",
-            "Prose summary cannot substitute",
+            "one numbered item per row",
+            "what the image visibly contains",
+            "why production needs it",
+            "user's current conversation language",
+            "Never paste decision JSON",
+            "internal IDs, hashes, schema names, or artifact paths",
         )
         assert_contains_all(self, text, required)
-        self.assertLess(
-            text.index("exactly one complete validated `visual-decision/v1` object"),
-            text.index("Do you exactly approve the proposed reference slot ID set?"),
-        )
+        for banned in (
+            "`json` fenced code block",
+            "Do you exactly approve the proposed reference slot ID set?",
+            "Do you exactly approve the displayed target ID set?",
+        ):
+            self.assertNotIn(banned, text)
 
     def test_main_skill_preserves_pending_decision_when_refusing_requests(self) -> None:
         text = read("godot-game-production/SKILL.md")
         required = (
             "premature or scope-invalid request for a pending `initial_scope` or `delta_scope`",
-            "same response must continue this gate with its complete validated fenced decision and canonical scope question",
+            "same response must continue the file-first gate with the validated localized projection",
             "never refusal-only prose",
-            "`reference_not_proof` remains a fenced refusal decision without a scope question",
+            "`reference_not_proof` writes its complete decision to the pending path",
+            "renders only its localized stored message",
+            "does not ask the scope question",
         )
         assert_contains_all(self, text, required)
         self.assertLess(
@@ -63,17 +71,17 @@ class DynamicVisualReferenceContractTests(unittest.TestCase):
             text.index("After the user's exact full-set approval"),
         )
 
-    def test_main_skill_requires_canonical_schema_before_pending_serialization(self) -> None:
+    def test_main_skill_requires_canonical_schema_before_pending_write(self) -> None:
         text = read("godot-game-production/SKILL.md")
         required = (
-            "Before emitting any pending `visual-decision/v1`",
+            "Before writing any pending `visual-decision/v2`",
             "read `references/visual-contract.md` and `references/evidence-ledger.md` in the current turn",
-            "exact complete `visual-decision/v1` schema in `references/visual-contract.md`",
+            "exact complete `visual-decision/v2` schema in `references/visual-contract.md`",
             "abbreviated, invented aliases, and short objects are invalid",
         )
         assert_contains_all(self, text, required)
         self.assertLess(
-            text.index("Before emitting any pending `visual-decision/v1`"),
+            text.index("Before writing any pending `visual-decision/v2`"),
             text.index("Derive a needs-based initial or delta row set"),
         )
 
@@ -84,13 +92,17 @@ class DynamicVisualReferenceContractTests(unittest.TestCase):
             text,
             (
                 "pending `initial_scope` or `delta_scope` decisions",
-                "`reference_not_proof` emits its complete fenced decision",
+                "`reference_not_proof` writes its complete decision to the pending path",
+                "renders only its localized stored message",
                 "does not ask the scope question",
             ),
         )
 
     def test_main_skill_requires_authorization_before_imagegen(self) -> None:
         text = read("godot-game-production/SKILL.md")
+        authorization_flow = text[
+            text.index("After the user's exact full-set approval"):
+        ]
         ordered = (
             "visual-scope-approval/v1",
             "authorize-generation",
@@ -98,10 +110,10 @@ class DynamicVisualReferenceContractTests(unittest.TestCase):
             "AUTHORIZED",
             "ImageGen",
         )
-        assert_contains_all(self, text, ordered)
+        assert_contains_all(self, authorization_flow, ordered)
         self.assertEqual(
-            [text.index(value) for value in ordered],
-            sorted(text.index(value) for value in ordered),
+            [authorization_flow.index(value) for value in ordered],
+            sorted(authorization_flow.index(value) for value in ordered),
         )
 
     def test_main_skill_binds_generated_rows_to_authorization(self) -> None:
@@ -135,7 +147,7 @@ class DynamicVisualReferenceContractTests(unittest.TestCase):
         required = (
             "missing or changed player-visible state",
             "complete `delta_scope` decision before any implementation-detail question or game change",
-            "unresolved presentation details stay as pending placeholders",
+            "unresolved machine-only bindings stay as pending placeholders",
             "Never announce or reopen a visual delta in prose only",
             "missing base contract or target identity uses `<required-value>`",
             "stated independent work in `continuing_work`",
@@ -166,6 +178,7 @@ class DynamicVisualReferenceContractTests(unittest.TestCase):
             text,
             (
                 "visual-decision/v1",
+                "visual-decision/v2",
                 "visual-decision-report/v1",
                 "visual-scope-approval/v1",
                 "visual-correction-approval/v1",
@@ -173,8 +186,26 @@ class DynamicVisualReferenceContractTests(unittest.TestCase):
                 "Exit code `0`",
                 "Exit code `2`",
                 "Exit code `3`",
-                "Do you exactly approve the proposed reference slot ID set?",
-                "Do you exactly approve the displayed target ID set?",
+                "`presentation`",
+                "`title`, `image_description`, and `purpose`",
+                "`user_interface`",
+                "present-decision",
+                "present-target-question",
+                "must never be pasted into chat",
+            ),
+        )
+        self.assertNotIn("### `visual-decision/v1`", text)
+
+    def test_visual_contract_preserves_dynamic_cardinality(self) -> None:
+        text = read("godot-game-production/references/visual-contract.md")
+        assert_contains_all(
+            self,
+            text,
+            (
+                "one row maps to one proposed image and one numbered item",
+                "no minimum, maximum, or preferred pack size",
+                "late visual discovery",
+                "repeat the same approval procedure",
             ),
         )
 
@@ -224,6 +255,8 @@ class DynamicVisualReferenceContractTests(unittest.TestCase):
                 "late visual delta",
                 "fresh authorization",
                 "unauthorized raw output cannot enter verified evidence",
+                "machine JSON stays in project files",
+                "numbered image descriptions and approval questions in the user's language",
             ),
         )
 

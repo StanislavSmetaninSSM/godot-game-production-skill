@@ -1,5 +1,13 @@
 # Dynamic Visual Reference Contract: Control RED Baseline
 
+## 2026-09-05 file-first presentation correction
+
+Historical runs below used the retired fenced `visual-decision/v1` chat format.
+Fresh acceptance uses file-only `visual-decision/v2`, a bound
+`decision-report.json`, and the exact localized output of the deterministic
+presentation renderer. Historical verdicts remain provenance, not evidence that
+the current user-facing contract passes.
+
 ## 2026-09-05 scorer-policy correction
 
 Fresh acceptance runs use `dvc-trace/v2`, which records observable run counters and

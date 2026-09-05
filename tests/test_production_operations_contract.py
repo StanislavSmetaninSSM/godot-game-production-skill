@@ -125,7 +125,7 @@ class ProductionOperationsContractTests(unittest.TestCase):
             (
                 "AUDIT -> SPECIFY -> VISUAL_PENDING -> VISUAL_APPROVED -> "
                 "GODOT_FEASIBILITY ->\nCORE_LOOP -> PRODUCTION -> RELEASE",
-                "Do you exactly approve the displayed target ID set?",
+                "present-target-question",
                 "`test-driven-development`",
                 "`requesting-code-review`",
                 "`verification-before-completion`",

@@ -55,6 +55,14 @@ def slot(
         "sound_cue": "interaction confirmation",
         "dependent_work": ["core-loop presentation"],
         "rationale": "No approved target resolves this composition.",
+        "presentation": {
+            "title": "Primary traversal state",
+            "image_description": (
+                "Side-view gameplay with the player crossing a compact room "
+                "past one readable hazard, with the HUD and interaction effect visible"
+            ),
+            "purpose": "The reference settles the core gameplay composition",
+        },
         "image_count": 1,
         "change_kind": change_kind,
         "supersedes_target_id": supersedes_target_id,
@@ -125,7 +133,7 @@ class EvidenceRunV2SchemaTests(unittest.TestCase):
 
     def initial_decision(self) -> dict[str, object]:
         return {
-            "schema_version": "visual-decision/v1",
+            "schema_version": "visual-decision/v2",
             "decision_id": "00000000-0000-4000-8000-000000000001",
             "builder_id": "builder",
             "created_at": "2026-08-20T09:00:00+10:00",
@@ -133,7 +141,15 @@ class EvidenceRunV2SchemaTests(unittest.TestCase):
             "state": "REFERENCE_SCOPE_PENDING",
             "generation_status": "not_started",
             "reference_plan": plan(),
-            "scope_question": visual_contract.CANONICAL_SCOPE_QUESTION,
+            "user_interface": {
+                "language": "en",
+                "scope_question": (
+                    "Do you approve this exact image set for generation?"
+                ),
+                "target_question": (
+                    "Do you approve this exact displayed image set?"
+                ),
+            },
         }
 
     def scope_approval(self, decision: dict[str, object]) -> dict[str, object]:
@@ -220,7 +236,7 @@ class EvidenceRunV2SchemaTests(unittest.TestCase):
     def test_scope_approval_rejects_reference_not_proof_decision(self) -> None:
         manifest = self.manifest()
         decision = {
-            "schema_version": "visual-decision/v1",
+            "schema_version": "visual-decision/v2",
             "decision_id": "00000000-0000-4000-8000-000000000002",
             "builder_id": "builder",
             "created_at": "2026-08-20T09:00:00+10:00",
@@ -229,6 +245,13 @@ class EvidenceRunV2SchemaTests(unittest.TestCase):
             "generation_status": "not_authorized",
             "verdict": "rejected",
             "preserved_evidence": list(visual_contract.CANONICAL_PROOF_GATES),
+            "user_interface": {
+                "language": "en",
+                "message": (
+                    "This reference guides visual direction but does not replace "
+                    "runtime or release evidence."
+                ),
+            },
         }
         approval = {
             "schema_version": "visual-scope-approval/v1",
@@ -293,7 +316,7 @@ class InitialVisualContractTests(unittest.TestCase):
 
     def initial_sources(self, manifest: dict[str, object]) -> tuple[dict[str, object], dict[str, object]]:
         decision = {
-            "schema_version": "visual-decision/v1",
+            "schema_version": "visual-decision/v2",
             "decision_id": "00000000-0000-4000-8000-000000000011",
             "builder_id": "builder",
             "created_at": "2026-08-20T09:00:00+10:00",
@@ -301,7 +324,15 @@ class InitialVisualContractTests(unittest.TestCase):
             "state": "REFERENCE_SCOPE_PENDING",
             "generation_status": "not_started",
             "reference_plan": plan(),
-            "scope_question": visual_contract.CANONICAL_SCOPE_QUESTION,
+            "user_interface": {
+                "language": "en",
+                "scope_question": (
+                    "Do you approve this exact image set for generation?"
+                ),
+                "target_question": (
+                    "Do you approve this exact displayed image set?"
+                ),
+            },
         }
         scope_approval = {
             "schema_version": "visual-scope-approval/v1",
@@ -526,7 +557,7 @@ class InitialVisualContractTests(unittest.TestCase):
         }
         delta_plan["rows"][0]["coverage"] = ["boss escalation"]
         delta_decision = {
-            "schema_version": "visual-decision/v1",
+            "schema_version": "visual-decision/v2",
             "decision_id": "00000000-0000-4000-8000-000000000012",
             "builder_id": "builder",
             "created_at": "2026-08-20T10:30:00+10:00",
@@ -548,7 +579,15 @@ class InitialVisualContractTests(unittest.TestCase):
                 "change_kind": change_kind,
             }],
             "target_approval_scope": "complete_delta_batch_only",
-            "scope_question": visual_contract.CANONICAL_SCOPE_QUESTION,
+            "user_interface": {
+                "language": "en",
+                "scope_question": (
+                    "Do you approve this exact image set for generation?"
+                ),
+                "target_question": (
+                    "Do you approve this exact displayed image set?"
+                ),
+            },
         }
         delta_scope_approval = {
             "schema_version": "visual-scope-approval/v1",

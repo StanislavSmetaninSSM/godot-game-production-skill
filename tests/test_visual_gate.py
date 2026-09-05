@@ -251,6 +251,81 @@ class VisualDecisionTests(unittest.TestCase):
                 with self.assertRaises(visual_contract.InvariantError):
                     visual_contract.validate_visual_decision(decision)
 
+    def test_user_facing_text_rejects_machine_content(self) -> None:
+        cases = (
+            (
+                "artifact path",
+                "scope",
+                "title",
+                "Описание из docs/visual-contract/contracts/example/decision.json",
+            ),
+            (
+                "machine field",
+                "scope",
+                "image_description",
+                "В кадре показан authorization_id для будущей генерации",
+            ),
+            (
+                "hash",
+                "scope",
+                "purpose",
+                "Контрольная сумма " + "a" * 64 + " связывает изображение",
+            ),
+            (
+                "schema name",
+                "scope_question",
+                None,
+                "Подтверждаете набор visual-decision/v2?",
+            ),
+            (
+                "serialized object",
+                "proof",
+                None,
+                'Этот референс хранит {"decision_id":"example"}, но не доказательство.',
+            ),
+        )
+        for label, target, field, text in cases:
+            with self.subTest(label=label):
+                decision = proof_decision() if target == "proof" else initial_decision()
+                if target == "scope":
+                    decision["reference_plan"]["rows"][0]["presentation"][field] = text
+                elif target == "scope_question":
+                    decision["user_interface"]["scope_question"] = text
+                else:
+                    decision["user_interface"]["message"] = text
+                with self.assertRaisesRegex(
+                    visual_contract.InvariantError, "machine-facing content"
+                ):
+                    visual_contract.validate_visual_decision(decision)
+
+    def test_user_facing_text_rejects_control_characters(self) -> None:
+        cases = (
+            ("presentation newline", "scope", "Исследование\nлокации"),
+            (
+                "question tab",
+                "scope_question",
+                "Подтверждаете\tэтот набор изображений?",
+            ),
+            (
+                "proof carriage return",
+                "proof",
+                "Этот референс\rне заменяет доказательство.",
+            ),
+        )
+        for label, target, text in cases:
+            with self.subTest(label=label):
+                decision = proof_decision() if target == "proof" else initial_decision()
+                if target == "scope":
+                    decision["reference_plan"]["rows"][0]["presentation"]["title"] = text
+                elif target == "scope_question":
+                    decision["user_interface"]["scope_question"] = text
+                else:
+                    decision["user_interface"]["message"] = text
+                with self.assertRaisesRegex(
+                    visual_contract.InvariantError, "control character"
+                ):
+                    visual_contract.validate_visual_decision(decision)
+
     def test_russian_interface_rejects_old_english_question(self) -> None:
         decision = initial_decision()
         decision["user_interface"]["scope_question"] = (
@@ -610,6 +685,25 @@ class VisualGateCliTests(unittest.TestCase):
             report = json.loads(report_path.read_text(encoding="utf-8"))
             report["decision_sha256"] = "a" * 64
             report_path.write_text(json.dumps(report), encoding="utf-8")
+            output = io.StringIO()
+            with contextlib.redirect_stdout(output):
+                code = visual_gate.main([
+                    "present-decision",
+                    "--decision", str(decision_path),
+                    "--report", str(report_path),
+                ])
+            self.assertEqual(code, 3)
+            self.assertEqual(output.getvalue(), "")
+
+    def test_present_decision_fails_silently_on_machine_content(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            decision = initial_decision()
+            decision["reference_plan"]["rows"][0]["presentation"]["purpose"] = (
+                "Решение записано в docs/visual-contract/contracts/id/decision.json"
+            )
+            decision_path, report_path = self._write_bound_pair(
+                Path(directory), decision
+            )
             output = io.StringIO()
             with contextlib.redirect_stdout(output):
                 code = visual_gate.main([

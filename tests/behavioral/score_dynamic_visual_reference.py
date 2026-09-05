@@ -6,7 +6,6 @@ import argparse
 import hashlib
 import json
 import os
-import re
 import tempfile
 import types
 from pathlib import Path
@@ -63,14 +62,6 @@ CRITERIA = (
     "raw_machine_leakage",
     "trace_policy",
 )
-MACHINE_FIELD = re.compile(
-    r"\b(?:schema_version|decision_id|reference_slot_id|decision_sha256|"
-    r"plan_sha256|authorization_id)\b",
-    re.IGNORECASE,
-)
-HASH = re.compile(r"\b[0-9a-f]{64}\b", re.IGNORECASE)
-
-
 class Unsafe(ValueError):
     pass
 
@@ -303,15 +294,8 @@ def _normalized_answer(value):
     return value.replace("\r\n", "\n").rstrip("\n")
 
 
-def _leaks_machine_data(answer, decision):
-    if (
-        "```" in answer
-        or "visual-decision/" in answer.casefold()
-        or MACHINE_FIELD.search(answer)
-        or HASH.search(answer)
-        or "{" in answer
-        or "}" in answer
-    ):
+def _leaks_machine_data(answer, decision, contract):
+    if contract.user_text_contains_machine_content(answer):
         return True
     if isinstance(decision, dict):
         rows = decision.get("reference_plan", {}).get("rows", [])
@@ -427,7 +411,7 @@ def _evaluate(
 
     require(
         "raw_machine_leakage",
-        not _leaks_machine_data(answer, decision_value),
+        not _leaks_machine_data(answer, decision_value, contract),
     )
     decision_id = (
         decision_value.get("decision_id", "")

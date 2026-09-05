@@ -209,6 +209,18 @@ class DynamicVisualReferenceContractTests(unittest.TestCase):
             ),
         )
 
+    def test_visual_contract_rejects_unsafe_user_facing_text(self) -> None:
+        text = read("godot-game-production/references/visual-contract.md")
+        assert_contains_all(
+            self,
+            text,
+            (
+                "control characters or embedded line breaks",
+                "machine-facing content",
+                "one physical paragraph per numbered item",
+            ),
+        )
+
     def test_visual_contract_enumerates_canonical_proof_gates_in_order(self) -> None:
         text = read("godot-game-production/references/visual-contract.md")
         marker = "The exact ordered canonical proof gates are:"

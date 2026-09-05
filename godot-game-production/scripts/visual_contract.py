@@ -93,6 +93,54 @@ AUTHORIZATION_FIELDS = {
     "rejected_target_id", "correction_approval_artifact_id",
 }
 AUTHORIZED_SLOT_FIELDS = {"reference_slot_id", "result_budget"}
+USER_TEXT_MACHINE_FIELDS = frozenset(
+    {"sha256"}
+    | {
+        field
+        for fields in (
+            REFERENCE_PLAN_FIELDS,
+            REFERENCE_SLOT_FIELDS,
+            PRESENTATION_FIELDS,
+            SCOPE_USER_INTERFACE_FIELDS,
+            PROOF_USER_INTERFACE_FIELDS,
+            COMMON_DECISION_FIELDS,
+            INITIAL_DECISION_FIELDS,
+            DELTA_DECISION_FIELDS,
+            PROOF_DECISION_FIELDS,
+            DECISION_REPORT_FIELDS,
+            PRESERVED_BINDING_FIELDS,
+            AFFECTED_TARGET_FIELDS,
+            SCOPE_APPROVAL_FIELDS,
+            CORRECTION_APPROVAL_FIELDS,
+            REJECTED_AUTH_INPUT_FIELDS,
+            AUTHORIZATION_FIELDS,
+            AUTHORIZED_SLOT_FIELDS,
+        )
+        for field in fields
+        if "_" in field
+    }
+)
+USER_TEXT_MACHINE_FIELD_PATTERN = re.compile(
+    r"\b(?:" + "|".join(sorted(USER_TEXT_MACHINE_FIELDS)) + r")\b",
+    re.IGNORECASE,
+)
+USER_TEXT_SCHEMA_PATTERN = re.compile(
+    r"\bvisual-[a-z0-9-]+/v[0-9]+\b", re.IGNORECASE
+)
+USER_TEXT_HASH_PATTERN = re.compile(r"\b[0-9a-f]{64}\b", re.IGNORECASE)
+USER_TEXT_UUID_PATTERN = re.compile(
+    r"\b[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}\b", re.IGNORECASE
+)
+USER_TEXT_INTERNAL_ID_PATTERN = re.compile(
+    r"\b(?:REF|SLOT|TARGET|VC|VRP|VGA)(?:-[A-Z0-9][A-Z0-9_.:-]*)+\b"
+)
+USER_TEXT_ARTIFACT_PATH_PATTERN = re.compile(
+    r"(?<![A-Za-z0-9_.-])(?:docs|tests|godot-game-production)[\\/]"
+    r"[^\s'\"`]+|"
+    r"\b(?:decision(?:-report)?|scope-approval|correction-approval|"
+    r"generation-authorization)\.json\b",
+    re.IGNORECASE,
+)
 
 
 class SchemaError(ValueError):
@@ -247,6 +295,44 @@ def _is_technical_id_only(value: str) -> bool:
     )
 
 
+def user_text_contains_control_characters(value: str) -> bool:
+    return any(
+        ord(character) < 32
+        or ord(character) == 127
+        or character in {"\u2028", "\u2029"}
+        for character in value
+    )
+
+
+def user_text_contains_machine_content(value: str) -> bool:
+    return bool(
+        "```" in value
+        or "{" in value
+        or "}" in value
+        or USER_TEXT_MACHINE_FIELD_PATTERN.search(value)
+        or USER_TEXT_SCHEMA_PATTERN.search(value)
+        or USER_TEXT_HASH_PATTERN.search(value)
+        or USER_TEXT_UUID_PATTERN.search(value)
+        or USER_TEXT_INTERNAL_ID_PATTERN.search(value)
+        or USER_TEXT_ARTIFACT_PATH_PATTERN.search(value)
+    )
+
+
+def _user_facing_text(value: object, label: str) -> str:
+    raw = _text(value, label)
+    _invariant(
+        not user_text_contains_control_characters(raw),
+        f"{label} contains a control character",
+    )
+    text = raw.strip()
+    _invariant(
+        not user_text_contains_machine_content(text),
+        f"{label} contains machine-facing content",
+    )
+    _invariant(not _has_placeholder(text), f"{label} contains a placeholder")
+    return text
+
+
 def _language(value: object) -> str:
     language = _text(value, "user interface language").strip()
     _invariant(
@@ -258,8 +344,7 @@ def _language(value: object) -> str:
 
 
 def _localized_text(value: object, label: str, language: str) -> str:
-    text = _text(value, label).strip()
-    _invariant(not _has_placeholder(text), f"{label} contains a placeholder")
+    text = _user_facing_text(value, label)
     primary = language.split("-", 1)[0].casefold()
     if primary == "ru":
         _invariant(
@@ -286,11 +371,7 @@ def _validate_presentation(
         text = (
             _localized_text(value[field], label, language)
             if language is not None
-            else _text(value[field], label).strip()
-        )
-        _invariant(
-            not _has_placeholder(text),
-            f"{label} contains a placeholder",
+            else _user_facing_text(value[field], label)
         )
         _invariant(
             not _is_technical_id_only(text),

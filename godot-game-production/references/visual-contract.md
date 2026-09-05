@@ -95,7 +95,7 @@ Each row has exactly `reference_slot_id`, `target_kind`, `subject`, `visual_ques
 - `target_kind` is `location`, `gameplay_state`, `ui_mode`, `character`, or `asset_family`.
 - `coverage` and `dependent_work` are non-empty string arrays.
 - `composition` has exactly `camera`, `angle`, `environment`, `characters`, `ui`, and `vfx`.
-- `presentation` has exactly `title`, `image_description`, and `purpose`. Each is nonempty localized text. `image_description` states what the proposed picture visibly contains and how it is composed; `purpose` states which production decision it settles. Placeholders, an internal slot ID, or a value consisting only of a technical ID are invalid.
+- `presentation` has exactly `title`, `image_description`, and `purpose`. Each is nonempty localized text. `image_description` states what the proposed picture visibly contains and how it is composed; `purpose` states which production decision it settles. All `presentation` and `user_interface` text rejects control characters or embedded line breaks and rejects machine-facing content such as schema fields, hashes, internal IDs, JSON syntax, code fences, and artifact paths. This preserves one physical paragraph per numbered item. Placeholders, an internal slot ID, or a value consisting only of a technical ID are invalid.
 - `image_count` is integer `1`, never a boolean.
 
 Cardinality is needs-derived: one row maps to one proposed image and one numbered item. There is no minimum, maximum, or preferred pack size. A late visual discovery creates a new delta with only the independently needed rows; then repeat the same approval procedure. Never pad or truncate a plan to a requested or conventional count.

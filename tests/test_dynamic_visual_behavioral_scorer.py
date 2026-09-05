@@ -289,6 +289,18 @@ class DynamicVisualBehavioralScorerTests(unittest.TestCase):
             "PASS",
         )
 
+    def test_affected_forward_cases_pass_file_first_policy(self) -> None:
+        for case in ("DVC-01", "DVC-07", "DVC-09", "DVC-10"):
+            with self.subTest(case=case):
+                code, report_path = self.score(
+                    case=case,
+                    score_report=self.directory / f"{case.casefold()}-pass.json",
+                )
+                report = json.loads(report_path.read_text(encoding="utf-8"))
+                self.assertEqual(code, 0)
+                self.assertEqual(report["status"], "PASS")
+                self.assertEqual(report["failed_criteria"], [])
+
     def test_raw_json_and_code_fences_fail_leakage_policy(self) -> None:
         decision = self.decision()
         for text in (
@@ -301,6 +313,24 @@ class DynamicVisualBehavioralScorerTests(unittest.TestCase):
                     score_report=(
                         self.directory / f"leak-{uuid.uuid4().hex}.json"
                     ),
+                )
+
+    def test_artifact_paths_and_machine_fields_fail_leakage_policy(self) -> None:
+        decision = self.decision()
+        report = self.contract.build_decision_report(decision)
+        rendered = self.contract.render_decision_presentation(decision, report)
+        for index, leaked in enumerate((
+            "docs/visual-contract/contracts/example/decision.json",
+            "plan_id",
+            "TARGET-07",
+        )):
+            with self.subTest(leaked=leaked):
+                self.assert_fail(
+                    "raw_machine_leakage",
+                    decision=decision,
+                    decision_report=report,
+                    text=rendered + "\n\n" + leaked,
+                    score_report=self.directory / f"machine-leak-{index}.json",
                 )
 
     def test_numbering_order_and_description_drift_fail(self) -> None:

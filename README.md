@@ -10,9 +10,16 @@ Visual references are needs-derived rather than fixed in count. The user approve
 the complete slot set before ImageGen; the deterministic command then issues an
 exact batch authorization. One condition is that one authorized row budgets one generated result.
 A late visual delta repeats the decision and authorization flow, and a correction needs fresh authorization.
-The rule is that unauthorized raw output cannot enter verified evidence or a release result.
+The rule is that unauthorized raw output cannot enter verified evidence as an approved reference or a release result as proof.
 During approval, machine JSON stays in project files. Chat shows detailed,
 numbered image descriptions and approval questions in the user's language.
+
+After visual target approval, the agent independently chooses suitable existing
+assets, procedural/native authoring, ImageGen, or a combination for production
+art. It explicitly considers ImageGen for textures, sprites, decals, and other
+bitmap assets, generates and refines them without per-image approval, and checks
+their integration in Godot. A change to the approved visual direction reopens
+reference approval; routine asset production does not.
 
 Important: screenshots are design evidence only. They never prove mechanics. Mechanics require evidence from the target Godot build that shows the input, state change, and outcome, with filmstrip or video evidence where the skill calls for it.
 

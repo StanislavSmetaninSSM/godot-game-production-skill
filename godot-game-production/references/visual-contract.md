@@ -4,6 +4,12 @@
 
 ## File-first command flow
 
+This approval and authorization flow applies to reference images establishing
+visual direction, including reference corrections and deltas. Production textures
+and other working assets implementing approved targets use `production-assets.md`
+without per-image approval or reference slot budgets. Their source files do not
+become approved reference targets; their integration requires Godot evidence.
+
 1. Write one complete pending `visual-decision/v2` to `docs/visual-contract/pending/<decision-id>/decision.json`.
 2. Validate it and write its sibling report:
 
@@ -198,4 +204,4 @@ This is valid `decision.json` content for an English two-row initial proposal. I
 
 Display the actual bitmap, copy it to a project-local PNG, verify SHA-256, and record buildability, motion cue, and sound cue. Each result is a `target_gameplay_image` artifact with its exact `authorization_id`. A rejected result becomes `rejected_target_image`, preserving target ID, slot, path, hash, bytes, coverage, and `generated_at` with plan/revision and rejection provenance. Present the complete authorized candidate batch before target approval; that approval binds the complete ID/hash/path set.
 
-Fail closed for missing or partial scope approval, generation before authorization, missing, duplicate, extra, unbound, unshown, moved, or hash-drifted targets, timestamp inversion, invalid base, hidden replacement, global contradiction, or incomplete batch. Writing, validation, report binding, or rendering failure emits no approval question and permits no ImageGen call. The platform may return raw ImageGen bytes, but they cannot obtain verified evidence or release status without this authorization chain.
+For reference batches, fail closed for missing or partial scope approval, generation before authorization, missing, duplicate, extra, unbound, unshown, moved, or hash-drifted targets, timestamp inversion, invalid base, hidden replacement, global contradiction, or incomplete batch. Writing, validation, report binding, or rendering failure emits no approval question and permits no reference ImageGen call. Raw reference images cannot enter the approved contract without this chain. An unrelated production asset still follows its own approved direction and scoped dependencies.

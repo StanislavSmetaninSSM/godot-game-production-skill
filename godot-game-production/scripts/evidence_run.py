@@ -701,7 +701,7 @@ def _unique_index(
 def _generation_authorization_errors(
     data: dict[str, object], artifact_index: dict[str, dict[str, object]]
 ) -> list[str]:
-    """Resolve every generated image through its immutable authorization chain."""
+    """Resolve generated reference targets through their authorization chains."""
     errors: list[str] = []
     decisions, duplicate_errors = _unique_index(
         data["visual_decisions"], lambda row: row.get("decision_id"), "visual decision id"

@@ -28,6 +28,29 @@ For 2.5D, declare which depth, sorting, collision, camera, and lighting rules ar
 2D and which are 3D. Load the 3D reference only when the implementation actually
 uses that pipeline.
 
+## Visual and motion diagnostics
+
+Use `visual-quality.md` for native-pixel comparisons and `motion-quality.md` for
+the coverage matrix. Preserve the chosen rendering family: true pixel art, HD
+pixel, painted and vector-like art need different filtering, contour and cadence
+rules. Capture native pixels before enlargement; verify texel/line density,
+sorting, occlusion, tile seams and the smallest supported viewport.
+
+Choose frame-by-frame animation, cut-out rigs or procedural motion to fit the
+approved art. Review all relevant facings and transitions, including mirrored
+anchors. Separate held drawings from simulation ticks; do not interpolate a
+deliberate low drawing rate to satisfy a continuous-motion metric. Measure foot
+contact in ground/support space, and source/effect alignment in the same space.
+Check pause/resume, worst supported HUD strings and effect onset/settling with
+runtime sequences. The offline helpers and their limits are in `quality-tools.md`.
+
+Inspect the whole actor as well as numeric anchors: attached limbs/equipment can
+look disconnected while sampled points pass. Exercise mirrored projectile origins,
+near/inside-target spawning and fast crossings; confirm the visible warning, hit
+region and actual hit/interruption agree. Check support/sorting at relevant overlaps.
+Use screen or support-plane units deliberately; a 2D pixel tolerance is not a 3D
+world-distance rule. Select actor-specific checks for grounded, flying or rigid art.
+
 ## Runtime acceptance
 
 Set project-specific target-hardware budgets for frame time, draw calls, node and

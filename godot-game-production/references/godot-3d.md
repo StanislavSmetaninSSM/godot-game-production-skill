@@ -45,6 +45,35 @@ feasibility proof in neutral, gameplay, dialogue, and motion contexts before the
 become a production dependency. Two qualified failures at the same perceptual
 gate trigger a simpler foundation, not more variants.
 
+## Visual and motion diagnostics
+
+Use `visual-quality.md` to fix camera projection/FOV, exposure, environment and
+render settings for comparable target views. Diagnose silhouette, material and
+light separately; include additional views and motion for occlusion, surfaces and
+depth that one beautiful frame cannot establish. Check UV/texel scale, material
+response and silhouette at the gameplay distance before increasing detail.
+
+Use `motion-quality.md` for the action/transition/direction/support matrix. Match
+skeletal blends and root movement to the approved style; IK is an available
+contact correction, not a universal requirement. Check slopes, steps, support
+changes and moving/rotating platforms where present. Measure planted feet in
+support-local space or against fully transported contact anchors, not against
+world immobility. Ground-normal sole separation needs its own ground/contact
+measurement; contact_drift alone does not detect penetration. Root-local pose
+checks must account for root rotation. Verify weapon/contact/event timing,
+occlusion and camera collisions through the actual action sequence. Helpers and
+their bounded input contracts are in `quality-tools.md`.
+
+For free-flight or height-dependent play, test all movement axes, diagonals,
+reversal/braking at the speed limit, current plus thrust and moving cargo attach/
+release. Check speed and acceleration across the transition, including numerical
+tolerance near limits. For geometry, inspect columns, ceiling and under-shelf paths
+with the actual collision body and gameplay camera. Declare which visual appendages
+have collision; body clearance does not prove every rotor/weapon avoids overlap.
+Capture partial and total camera occlusion and recovery at adverse heights. Verify
+danger volume/depth readability, not only distance to the hazard centre. Match tests
+to the actor; skeletal foot checks do not establish a drone's contact quality.
+
 ## Evidence and next gate
 
 Evaluate every procedural system with canonical, random, boundary, and

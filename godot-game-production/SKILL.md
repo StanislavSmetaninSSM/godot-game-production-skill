@@ -26,6 +26,14 @@ For a new project, establish the bounded experience promise, player, platform, i
 `AUDIT -> SPECIFY -> VISUAL_PENDING -> VISUAL_APPROVED -> GODOT_FEASIBILITY ->
 CORE_LOOP -> PRODUCTION -> RELEASE`
 
+Explicit user delegation of visual decisions persists within its stated scope.
+When present, have a reviewer distinct from the builder exercise that authority
+through the same exact-set scope, generation and target gates; retain the user's
+source instruction and the actual reviewer identity. Do not ask again or label an
+agent as `user`. This overrides the human-wait steps below only within that scope.
+Use the delegated review binding in `references/evidence-ledger.md` for acceptance.
+Without explicit delegation, the normal user approval procedure remains required.
+
 When the brief and core mechanics are sufficient and no consequential specification decision remains, read `references/visual-contract.md` and `references/evidence-ledger.md` before creating or changing a visual decision.
 
 The numbered approval procedure below governs reference images that establish or change visual direction. Working textures, sprites, decals, and other production assets implementing approved direction follow **Production asset authoring** below; they do not consume reference slots or require per-image user approval.
@@ -49,6 +57,11 @@ Remain `VISUAL_PENDING` until the initial contract receives exact target approva
 
 Generated targets are design evidence only. After approval, reproduce one representative target in the actual Godot project. Read `references/gameplay-evidence.md` and prove a complete causal core loop before content multiplication.
 
+At that first playable loop, run the short exported-build and capture preflight in
+`references/gameplay-evidence.md`. Before freezing a candidate, exercise its risky
+mechanic intersections and applicable dimension-specific contacts. Reserve the full
+acceptance capture for a candidate that survives those checks.
+
 When broad enemy, level, UI, asset, or content production is requested before exact target approval, explicitly state this order: `complete target gameplay pack with per-frame buildability accounts -> exact user approval -> one representative target reproduced in the actual Godot project -> asset and content multiplication`.
 
 ## Production asset authoring
@@ -61,6 +74,9 @@ Judge the boundary by what the image decides, not its filename: a texture implem
 
 ## Route only what is needed
 
+- Read `references/visual-quality.md` when reproducing an approved target or diagnosing composition, palette, scale, material, or readability gaps. It provides a measured passport and controlled comparisons for both 2D and 3D.
+- Read `references/motion-quality.md` when authoring or judging motion, contacts, attack/effect timing, transitions, or reactive surroundings. Choose animation techniques by style and dimension; declare coverage before capture. Missing required observations remain non-passing.
+- Read `references/quality-tools.md` when using `scripts/frame_compare.py` or `scripts/motion_check.py` on captured images or project-exported telemetry. These are diagnostic helpers, not Godot capture adapters or acceptance gates; their results cannot replace the existing evidence and review requirements.
 - Read `references/production-operations.md` when the current production interval has two or more implementation slices scheduled to overlap or be delegated concurrently, or when multiple agents or worktrees will implement related parts of the same candidate. Do not read it merely for several serial steps in one bounded slice.
 - Read `references/gameplay-evidence.md` when planning or judging playtest matrices, fixtures, seeded coverage, or integrated player-journey evidence. This routing complements the existing post-approval core-loop use of that reference.
 - Read `references/procedural-art.md` for generated visual systems or repeated assets.
@@ -68,7 +84,7 @@ Judge the boundary by what the image decides, not its filename: a texture implem
 - For 3D, read `references/godot-3d.md` and do not read the 2D reference.
 - Load both only for an explicitly hybrid pipeline. State the next user-visible approval or evidence gate after routing.
 - Read `references/evidence-ledger.md` when creating or validating milestone evidence.
-- Read `references/release-checks.md` for milestone or release decisions.
+- Read `references/release-checks.md` for milestone or release decisions, quality-of-play claims, and continuous audio/performance capture. A completed agent route alone establishes none of human pacing, enjoyment, replay value or native input quality.
 
 ## Stop rules
 

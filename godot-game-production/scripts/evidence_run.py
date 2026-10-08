@@ -48,6 +48,7 @@ KIND_PROVENANCES = {
     "clean_install_record": {"godot_runtime", "environment_report"},
     "save_restart_capture": {"godot_runtime"},
     "review_record": {"review_record"},
+    "visual_review_delegation": {"user_instruction"},
     "procedural_grammar": {"review_record"},
     "procedural_population": {"review_record"},
     "procedural_output": {"godot_runtime"},
@@ -61,6 +62,7 @@ PROVENANCES = {
     "state_trace",
     "review_record",
     "environment_report",
+    "user_instruction",
 }
 REQUIRED_KINDS = {
     "core_play": {
@@ -295,7 +297,12 @@ def _validate_schema(data: object) -> dict[str, object]:
         "procedural_none_reason",
         "procedural_systems",
     }
-    _require(set(data) == required, "top-level manifest fields differ")
+    _require(required.issubset(data) and set(data).issubset(required | {"visual_review_delegations"}), "top-level manifest fields differ")
+    delegations = data.get("visual_review_delegations", [])
+    _require(isinstance(delegations, list)
+             and all(isinstance(item, str) and item.strip() for item in delegations),
+             "visual_review_delegations must contain artifact IDs")
+    _require(len(set(delegations)) == len(delegations), "duplicate visual delegation references")
     _require(data["schema_version"] == "evidence-run/v2", "wrong schema version")
     try:
         uuid.UUID(data["run_id"])
@@ -649,6 +656,7 @@ def _review_errors(
     builder_id: str,
     *,
     approval_reviewer: str | None = None,
+    delegated_reviewers: set[str] | None = None,
 ) -> list[str]:
     errors: list[str] = []
     evidence_ids = set(facet_row["evidence_ids"])
@@ -663,7 +671,9 @@ def _review_errors(
             errors.append(f"review {review_id} belongs to another facet")
         if review["verdict"] != "accept":
             errors.append(f"review {review_id} rejected the evidence")
-        if review["role"] != expected_role:
+        delegated_visual = (facet == "visual" and review["role"] == "independent_reviewer"
+                            and review["reviewer_id"] in (delegated_reviewers or set()))
+        if review["role"] != expected_role and not delegated_visual:
             errors.append(f"review {review_id} has the wrong role")
         if facet in {"visual", "ux_onboarding"} and review["reviewer_id"] == builder_id:
             errors.append(f"{facet} reviewer is the builder")
@@ -676,6 +686,56 @@ def _review_errors(
     if reviewed != evidence_ids:
         errors.append(f"{facet} reviews do not cover the exact evidence set")
     return errors
+
+
+def _visual_delegation_errors(
+    root: Path, data: dict[str, object], artifact_index: dict[str, dict[str, object]],
+) -> tuple[set[str], list[str]]:
+    """Resolve explicit user delegation without treating local bytes as identity proof."""
+    ids = data.get("visual_review_delegations", [])
+    errors: list[str] = []
+    reviewers: set[str] = set()
+    grants = {row["id"] for row in data["artifacts"] if row["kind"] == "visual_review_delegation"}
+    if grants != set(ids):
+        errors.append("visual delegation artifacts must be referenced exactly once")
+    fields = {"schema_version", "run_id", "contract_id", "contract_sha256", "reviewer_id",
+              "grantor_role", "scope", "source_ref", "authorization_quote", "recorded_at"}
+    if not ids:
+        return reviewers, errors
+    chain, chain_errors = _approved_visual_chain(data)
+    visual_row = data["facets"].get("visual", {})
+    used_reviewers = {row["reviewer_id"] for row in data["reviews"]
+                     if row["facet"] == "visual" and row["role"] == "independent_reviewer"
+                     and row["id"] in visual_row.get("review_ids", [])}
+    for artifact_id in ids:
+        artifact = artifact_index.get(artifact_id)
+        if artifact is None or artifact["kind"] != "visual_review_delegation":
+            errors.append(f"visual delegation {artifact_id} lacks its intact record")
+            continue
+        try:
+            record = visual_contract.loads_json((root / artifact["path"]).read_text(encoding="utf-8"))
+            _require(isinstance(record, dict) and set(record) == fields, "delegation fields differ")
+            for field in fields:
+                _require_text(record[field], f"delegation {field}")
+            _require(record["schema_version"] == "visual-review-delegation/v1", "wrong delegation schema")
+            _require(record["grantor_role"] == "user" and record["scope"] == "visual_review", "wrong delegation authority or scope")
+            _require(visual_contract.is_aware_timestamp(record["recorded_at"]), "delegation timestamp must be aware")
+            _require(record["run_id"] == data["run_id"], "delegation belongs to another run")
+            _require(not chain_errors and bool(chain), "delegation contract chain is invalid")
+            _require(record["contract_id"] == chain[-1]["contract_id"], "delegation belongs to another active contract")
+            contract_hash = visual_contract.canonical_sha256([
+                {key: value for key, value in contract.items() if key != "approval"}
+                for contract in chain
+            ])
+            _require(record["contract_sha256"] == contract_hash, "delegation contract binding drifted")
+            reviewer = record["reviewer_id"]
+            _require(reviewer != data["builder_id"], "delegated reviewer is the builder")
+            _require(reviewer in used_reviewers, "delegation has no matching independent visual review")
+            _require(reviewer not in reviewers, "duplicate delegation for visual reviewer")
+            reviewers.add(reviewer)
+        except (OSError, UnicodeError, ValueError) as error:
+            errors.append(f"visual delegation {artifact_id}: {error}")
+    return reviewers, errors
 
 
 def _timestamp(value: str) -> datetime:
@@ -1357,6 +1417,8 @@ def _candidate_errors(
 
 def _evaluate(root: Path, data: dict[str, object]) -> dict[str, object]:
     artifact_index, global_errors = _artifact_index(root, data["artifacts"])
+    delegated_reviewers, delegation_errors = _visual_delegation_errors(root, data, artifact_index)
+    global_errors.extend(delegation_errors)
     global_errors.extend(_generation_authorization_errors(data, artifact_index))
     review_index, review_index_errors = _review_index(data["reviews"])
     global_errors.extend(review_index_errors)
@@ -1407,6 +1469,7 @@ def _evaluate(root: Path, data: dict[str, object]) -> dict[str, object]:
                 artifact_index,
                 data["builder_id"],
                 approval_reviewer=approval_reviewer,
+                delegated_reviewers=delegated_reviewers,
             )
         )
         facet_results[facet] = {

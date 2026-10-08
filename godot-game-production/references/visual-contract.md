@@ -1,5 +1,11 @@
 # Visual Contract
 
+User approval is the default authority. If the user explicitly delegates visual
+decisions, follow `evidence-ledger.md` for truthful source and independent-reviewer
+bindings. The delegate performs the same scope/target gates within that authority;
+human-wait wording below does not require asking again. Exact decision, generation,
+batch, correction and target bindings remain unchanged.
+
 `scripts/visual_gate.py` is authoritative. JSON keys are unique, SHA-256 values are lowercase 64-hex digests, and every timestamp is timezone-aware ISO-8601. Canonical hashes use UTF-8 JSON, sorted object keys, and compact separators.
 
 ## File-first command flow

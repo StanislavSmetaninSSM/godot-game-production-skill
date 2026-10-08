@@ -13,6 +13,55 @@ The manifest schema is `evidence-run/v2`. It has four visual source arrays:
 `visual_contract_versions`, and `active_visual_contract_id`. There is no
 `evidence-run/v1` compatibility reader and no compatibility reader of another kind.
 
+An additive optional `visual_review_delegations` list contains artifact IDs. Omit
+it or use `[]` for the original user-review flow. Older v2 validators reject this
+extension; use the updated validator when supplying it. No existing source approval
+or generation-authorization schema changes.
+
+## Explicit delegated visual approval
+
+Use only when the user has actually delegated the relevant visual decisions and
+that instruction still applies. Scope approval and exact target approval remain
+separate; an independent reviewer performs them under the granted scope. Preserve
+the source instruction in existing task records before exercising it. Do not ask
+the user again within that scope or invent a human signature. Revocation or a new
+decision outside the grant returns to user review. This is not permission to waive
+evidence, independent review or any other facet.
+
+For final submission, register a UTF-8 JSON artifact of kind
+`visual_review_delegation`, provenance `user_instruction`, with the usual path and
+SHA-256. Its immutable content has exactly these fields:
+
+| Field | Value |
+|---|---|
+| `schema_version` | `visual-review-delegation/v1` |
+| `run_id` | This ledger's run UUID. |
+| `contract_id` | Exact active visual contract ID. |
+| `contract_sha256` | `visual_contract.canonical_sha256` of the ordered root-to-active contract chain as a JSON array, omitting `approval` from each node. Even an initial contract uses a one-element array. This binds inherited and added/replaced target paths/hashes. |
+| `reviewer_id` | Actual independent visual reviewer, distinct from builder and matching target approval. |
+| `grantor_role` | `user` describes the source of authority, not the reviewing agent. |
+| `scope` | `visual_review` |
+| `source_ref` | Traceable conversation/message or saved instruction reference. |
+| `authorization_quote` | Exact relevant user instruction, not an agent's inferred permission. |
+| `recorded_at` | Aware ISO-8601 time this binding record was created. |
+
+All strings are nonempty. The builder may transcribe the real source and bind the
+chosen reviewer within the delegated scope; this record is not a new user message.
+List its artifact ID exactly once in `visual_review_delegations`. The matching
+visual review uses the existing role `independent_reviewer`; `user` remains reserved
+for actual user review. Keep the independent accept/reject record and exact evidence
+coverage. An unused/orphan, duplicate, missing, malformed, wrong-run/contract/reviewer
+or hash-drifted grant fails; a builder grant cannot authorize self-review. New target
+bytes anywhere in that chain require a new binding record under the still-applicable
+user authority. Follow `base_contract_id` to order the chain; manifest storage order
+is not the chain order. Missing, duplicate or cyclic bases cannot authorize a grant.
+
+Validation proves local structure and byte integrity, not who spoke, whether the
+quote really authorizes this scope, or whether the review occurred. The orchestrator
+and independent reviewer must verify the source instruction and actual authorship.
+Retain superseded/revoked grants in historical evidence outside the current ledger;
+never rewrite them or use them for current acceptance.
+
 ## Store and resolve sources
 
 Use these recommended project-relative paths:

@@ -31,11 +31,47 @@ Any missing, stale, rejected, mismatched, or integrity-failed evidence leaves th
 facet non-passing and prevents milestone PASS.
 
 The builder may contribute evidence and self-review, but must not be the sole
-aesthetic reviewer or cold-player reviewer. User visual approval must bind the exact
+aesthetic reviewer or cold-player reviewer. User visual approval, or explicitly
+delegated independent approval under `evidence-ledger.md`, must bind the exact
 target artifact set. Cold-player UX review must cover the exact first-session
 evidence. Keep those reviewers literally distinct from the builder and preserve
 their accept/reject records; bookkeeping separation does not prove real identity or
 review quality.
+
+## Scope of the quality claim
+
+In the existing facet rationale, distinguish three questions: does the game work,
+can players perceive and understand it, and does its play meet the promised
+experience? These are claim boundaries, not three replacement scores or new gates.
+Record the milestone scope (for example playable prototype or release) up front.
+For each promised quality, name the criterion, observed evidence and remaining
+uncertainty. All eight facets still apply to that declared scope.
+
+A win proves an achievable outcome. Systems/content review additionally examines
+meaningful alternatives, dominant strategies, cost/recovery balance, tension, pacing
+and variety where promised. Compare observed session times to the original promise;
+keep misses and explain protocol differences without revising criteria to fit them.
+Do not infer fun or replayability from unit tests or agent completion. Human-play
+claims require human-play evidence; missing observations stay unverified.
+
+Reference feasibility establishes what can be built. Assess achieved composition,
+silhouette, material/detail and motion against the visual promise separately; a
+readable simple prototype does not establish the finish of an illustrative target.
+
+## Continuous audio and feedback
+
+Record representative action, danger, success, failure and ambience through complete
+onset/overlap/decay in uninterrupted target-build playback. Verify the recorded
+signal, not merely a `play()` event. Pausing for screenshots can cut tails and is
+unsuitable for this check. Link cues to the authoritative outcome and their intended
+meaning: a successful action emitting a denial cue is a feedback defect even when
+all expected frequencies are present. Inspect interruptions, retries and overlapping
+cues for contradictory or missing messages.
+
+Report clipping/tail measurements separately from listening and intelligibility.
+If nobody listened, say so; signal analysis does not prove pleasant or clear audio.
+Keep known semantic defects with their severity and effect on the promised scope.
+Frozen candidate status alone is no reason to downgrade an observed defect.
 
 ## Milestone decision
 
@@ -92,6 +128,15 @@ problem only.
 
 Derive budgets from the requirement and declared target hardware. Do not import a
 universal threshold from another project.
+
+Use an uninterrupted representative session for performance, separate from a
+screenshot-paused cold run. Measure monotonic frame intervals or a suitable profiler
+clock; smoothed engine delta alone can hide stalls. Record warm-up/exclusion rules,
+sample count, duration, median/percentiles, maximum and budget-exceeding intervals.
+Preserve outliers and capture overhead; do not delete spikes to improve a percentile.
+Main-loop timing is not display/input latency. If a stopped or unavailable control
+surface prevents foreground/input observations, retain that limitation and never
+bypass the stop through another adapter.
 
 ## Runtime and release proof
 

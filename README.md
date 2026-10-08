@@ -14,6 +14,11 @@ The rule is that unauthorized raw output cannot enter verified evidence as an ap
 During approval, machine JSON stays in project files. Chat shows detailed,
 numbered image descriptions and approval questions in the user's language.
 
+Explicit user delegation can authorize a distinct independent reviewer to approve
+visual decisions. The evidence ledger preserves the real user instruction and
+reviewer role, and binds the grant to the complete visual contract chain. Without
+that delegation, the normal user approval flow remains required.
+
 After visual target approval, the agent independently chooses suitable existing
 assets, procedural/native authoring, ImageGen, or a combination for production
 art. It explicitly considers ImageGen for textures, sprites, decals, and other
@@ -30,6 +35,12 @@ For concurrent production work, the skill conditionally loads
 game fact, define measurable conflict-aware slices, and verify their integrated
 candidate. A single bounded serial slice keeps the normal lighter routing.
 
+Visual and motion diagnostics support both dimension families: comparable frame
+captures, contact/pose/event measurements, and explicit coverage gaps. Production
+checks include early exported-build capture, risky mechanic combinations, continuous
+audio/performance runs, and bounded cold-player sessions. Agent completion does not
+establish human enjoyment, pacing, replay value or native input quality.
+
 ## Prerequisites
 
 - Codex with skill loading enabled.
@@ -37,6 +48,8 @@ candidate. A single bounded serial slice keeps the normal lighter routing.
 - [GitHub Spec Kit](https://github.com/github/spec-kit) and [Superpowers](https://github.com/obra/superpowers) installed and available to Codex.
 - The separately installed [`spec-kit-superpowers-bridge`](https://github.com/StanislavSmetaninSSM/spec-kit-superpowers-bridge) workflow available to Codex. The skill requires that named workflow: Spec Kit owns durable constitution, specification, plan, tasks, and consistency; Superpowers owns execution.
 - An available image-generation capability when the visual-contract gate is reached; the skill uses Codex `imagegen` for initial and material visual re-entry.
+- Python 3.10+ for bundled diagnostic and validation scripts. Frame comparison
+  requires Pillow and NumPy; motion and evidence checks use the standard library.
 
 This repository supplies the `godot-game-production` skill only. It does not install or vendor any prerequisite.
 
@@ -252,6 +265,19 @@ python3 "${CODEX_HOME:-$HOME/.codex}/skills/.system/skill-creator/scripts/quick_
 ```
 
 The expected result is `Skill is valid!`. This validates the skill's basic structure and metadata; it does not demonstrate a Godot game's mechanics or release readiness.
+
+Run both executable suites from the repository root (Pillow and NumPy are required
+for the frame-comparison tests). On Windows, use `python` in place of `python3`:
+
+```sh
+python3 -m unittest discover -s tests -v
+python3 -m unittest discover -s godot-game-production/tests -v
+```
+
+The diagnostic command contracts and limits are documented in
+[`quality-tools.md`](godot-game-production/references/quality-tools.md). The optional
+delegation extension to `evidence-run/v2` requires the updated validator; existing
+ledgers without that extension retain their original behavior.
 
 ## License
 

@@ -13,6 +13,22 @@ A still screenshot never proves a mechanic. Generated targets and source renders
 are not runtime evidence. Unit tests may support a claim, but they do not replace
 the causal in-game capture.
 
+## Early exported preflight
+
+Once the smallest loop is playable, export a development candidate and exercise
+normal entry, the central interaction, danger/interruption, loss/retry and success
+where implemented. Check the actual win trigger (including exit entry when required).
+Unimplemented outcomes stay explicit gaps; revisit them before candidate freeze.
+Verify the capture/input adapter in that package with a short clip and owner trace:
+readable frames, real inputs, matching state/outcome, and an audible event through
+its tail. A harness that works in the editor may be unavailable in an export.
+
+Run one representative `SUBMITTED` evidence path early, using real captures and
+available review records. Inspect its actual binding/path/coverage diagnostics;
+validating only a PENDING ledger does not exercise those checks. Other facets can
+remain pending. Neither this preflight nor a synthetic validator fixture is final
+acceptance. Preserve candidate identity and fix the adapter before long captures.
+
 ## Playtest matrix
 
 Before repeated playtests, record one row per planned run:
@@ -25,6 +41,14 @@ Before repeated playtests, record one row per planned run:
 | `input` | Exact player or automation input sequence. |
 | `expected_transition` | Authoritative state change and visible outcome. |
 | `artifact` | Target-build capture, trace, save, or telemetry identity. |
+
+Before candidate freeze, add a small risk-based set of **mechanic intersections**.
+Choose shared owners/resources and transition boundaries, not every Cartesian pair.
+Examples: carry + drop at an interaction zone; damage + held interaction; pause +
+partial work; suppression expiry + hazard warning; moving pickup + speed/acceleration
+change. Record priority when multiple actions are eligible, release/repress behavior,
+resource/progress retention and the route back to playable state. Validate numeric
+invariants alongside visible outcomes; a passing isolated mechanic is insufficient.
 
 Independent coverage rows vary scenario or prior state. Seeded rows intended to
 broaden coverage also use distinct seeds. A repeated seed is valid for reproduction
@@ -80,7 +104,32 @@ evidence for onboarding. Do not infer one facet from another or average failures
 
 ## Review gate
 
+Use `visual-quality.md` for measured frame findings and `motion-quality.md` for
+motion/event/coverage diagnostics when those claims are part of the slice.
+Register supporting captures and reports against the same candidate using the
+existing ledger; a diagnostic CHECKS_PASSED is not a facet or milestone decision.
+Missing required observations remain pending even when other measurements pass.
+
 Give reviewers the exact captures without builder rationale first. Require a user
-review for the visual contract, a cold player for onboarding, and independent
+or explicitly delegated independent review for the visual contract (see
+`evidence-ledger.md`), a cold player for onboarding, and independent
 reviews for the other submitted facets. A rejection, missing capture, wrong build,
 or incomplete evidence set keeps that facet failed or pending.
+
+## Bounded cold-player protocol
+
+Before dispatch, record the question, exact build, normal entry, permitted inputs,
+attempt and wall-time limits, and a stop condition for repeated no-progress states.
+Choose limits for the promised session and available budget. A cold player gets
+player-visible instructions and pixels, without source, telemetry, route coaching,
+prepared progression or the builder's explanation. Developer-assisted routes remain
+useful but are labelled separately. Preserve losses, confusion and abandoned attempts.
+
+Record simulation play time, wall time, pause policy and input transport separately.
+At the limit, report observations and unresolved claims; a timeout is not acceptance
+or proof of poor game design. Reasoning pauses alter reaction pressure and pacing.
+A paused screenshot-driven agent route supports discoverability only within that
+protocol; it does not establish continuous human feel, accessibility or native
+hardware input. If those are promised, obtain the corresponding test or leave the
+claim unverified. Keep continuous audio/performance runs separate under
+`release-checks.md`; do not record hours of pause silence as gameplay coverage.

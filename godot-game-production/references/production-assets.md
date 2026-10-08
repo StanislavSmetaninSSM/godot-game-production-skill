@@ -36,6 +36,12 @@ with metal armor changes the approved direction and reopens reference approval.
 
 ## Verify the consuming asset
 
+For a material appearance or readability gap, use `visual-quality.md` to compare
+the consuming Godot capture with the approved target under controlled conditions.
+For an animated asset, use `motion-quality.md` to declare the relevant actions,
+facings and transitions before capture. The chosen art technique remains a
+production decision within the approved direction.
+
 - For surface textures, inspect repetition and seams, pattern scale, UV placement,
   stretching, and texel density on the actual mesh. Request neutral illumination
   for color maps; remove unintended baked shadows or highlights. Do not assume a

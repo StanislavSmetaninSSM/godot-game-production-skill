@@ -1,0 +1,85 @@
+{
+  "schema_version": "visual-decision/v2",
+  "decision_id": "11111111-1111-1111-1111-111111111111",
+  "builder_id": "builder",
+  "created_at": "2026-10-09T01:00:00Z",
+  "decision_kind": "initial_scope",
+  "state": "REFERENCE_SCOPE_PENDING",
+  "generation_status": "not_started",
+  "reference_plan": {
+    "plan_id": "vrp-001",
+    "revision": 1,
+    "kind": "initial",
+    "base_contract_id": null,
+    "rows": [
+      {
+        "reference_slot_id": "REF-01",
+        "target_kind": "gameplay_state",
+        "subject": "normal traversal",
+        "visual_question": "canonical play-distance composition",
+        "coverage": [
+          "exploration/default"
+        ],
+        "composition": {
+          "camera": "side view",
+          "angle": "canonical",
+          "environment": "forest room",
+          "characters": "player and hazard",
+          "ui": "gameplay HUD",
+          "vfx": "interaction cue"
+        },
+        "motion_cue": "walk direction",
+        "sound_cue": "footstep response",
+        "dependent_work": [
+          "core loop"
+        ],
+        "rationale": "No approved target resolves normal play.",
+        "presentation": {
+          "title": "Exploring the forest room",
+          "image_description": "Side-view gameplay with the player moving between trees and a readable hazard, with camera distance, environment scale, HUD, and interaction effect visible",
+          "purpose": "This reference settles the primary gameplay composition"
+        },
+        "image_count": 1,
+        "change_kind": "initial",
+        "supersedes_target_id": null
+      },
+      {
+        "reference_slot_id": "REF-02",
+        "target_kind": "gameplay_state",
+        "subject": "failure and retry",
+        "visual_question": "failure-state composition",
+        "coverage": [
+          "failure/retry"
+        ],
+        "composition": {
+          "camera": "side view",
+          "angle": "impact",
+          "environment": "forest room",
+          "characters": "player and hazard",
+          "ui": "retry overlay",
+          "vfx": "hit cue"
+        },
+        "motion_cue": "knockback",
+        "sound_cue": "failure response",
+        "dependent_work": [
+          "retry flow"
+        ],
+        "rationale": "Failure must read independently from normal play.",
+        "presentation": {
+          "title": "Character defeat",
+          "image_description": "The same room at the moment of damage, with the character knocked back, the hazard clearly readable, and the retry overlay visible over the scene",
+          "purpose": "This reference settles the visual treatment of defeat and return to play"
+        },
+        "image_count": 1,
+        "change_kind": "initial",
+        "supersedes_target_id": null
+      }
+    ],
+    "approval": null
+  },
+  "user_interface": {
+    "language": "en",
+    "scope_question": "Do you approve this exact image set for generation?",
+    "target_question": "Do you approve this exact displayed image set?"
+  }
+}

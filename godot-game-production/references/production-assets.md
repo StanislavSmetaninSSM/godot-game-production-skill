@@ -7,25 +7,27 @@ while authoring; they constrain appearance, not the choice of authoring tool.
 ## Choose and make
 
 For each asset or coherent family, inspect the project's existing art and compare
-available library assets, procedural/native authoring, and ImageGen against the
-approved style, required detail, editability, runtime budget, and production cost.
-Reuse suitable assets with usable licensing; keep procedural materials where
-parameter control helps. Use `imagegen` for bitmap detail it can supply well:
-fabric or surface color textures, sprites, tiles, decals, portraits, and painted
-elements. Combining generated color detail with procedural material parameters
-is a valid choice. A new purchase or a separately billed tool still follows the
-user's existing permissions; using the available built-in ImageGen needs no new
-per-asset permission.
+available library assets, procedural/native authoring, and the selected image
+provider against the approved style, required detail, editability, runtime budget,
+and production cost. Reuse suitable assets with usable licensing; keep procedural
+materials where parameter control helps. Consider image generation for bitmap detail
+it can supply well: fabric or surface color textures, sprites, tiles, decals,
+portraits, and painted elements. Combining generated color detail with procedural
+material parameters is a valid choice. A new purchase or a separately billed tool
+still follows the user's existing permissions; an already available provider needs
+no new per-asset permission.
 
-When ImageGen is selected, read its skill and use the built-in path by default.
+When image generation is selected, read `references/image-generation.md`, resolve
+the selected image provider, and follow its adapter and native invocation path.
 Inspect the actual approved images and include relevant images as generation
-references where supported. State the asset's intended use, preserved identity,
-palette, pattern scale, dimensions/aspect ratio, transparency, and tiling or UV
-constraints as applicable. Generate a usable source image, not another concept
+references where supported and authorized. State the asset's intended use, preserved
+identity, palette, pattern scale, dimensions/aspect ratio, transparency, and tiling
+or UV constraints as applicable. Generate a usable source image, not another concept
 sheet. Save selected outputs inside the project, connect the consuming resource,
 and iterate on specific observed defects within the task and budget. If repeated
 attempts stop improving the result, change the authoring method or report the
-concrete limitation rather than generating indefinitely.
+concrete limitation rather than generating indefinitely. Provider invocation still
+follows the neutral failure and no-automatic-retry contract.
 
 For example, after approval of a dark cloth costume with worn gold embroidery,
 choose an existing cloth material if it fits. Otherwise generate the cloth color
@@ -59,11 +61,12 @@ production decision within the approved direction.
 
 Use the existing project asset inventory or production task notes to record the
 saved asset path, source/license or generation prompt and input references,
-approved visual target linkage, consuming scene/material, and integration checks.
-Keep machine details in project files and give the user a concise localized
-progress description. Follow `imagegen`'s delivery requirements when generating.
-Seed reproducibility rules in `procedural-art.md` apply to procedural generators;
-do not invent a deterministic seed or reproducibility guarantee for ImageGen.
+approved visual target linkage, consuming scene/material, provider/job and conversion
+details when applicable, and integration checks. Keep machine details in project
+files and give the user a concise localized progress description. Follow the selected
+image provider adapter's delivery requirements when generating. Seed reproducibility
+rules in `procedural-art.md` apply to procedural generators; do not invent a
+deterministic seed or reproducibility guarantee for image generation.
 
 These are source assets, not `target_gameplay_image` or `rejected_target_image`
 records. Do not fabricate reference authorizations or inflate reference plans to

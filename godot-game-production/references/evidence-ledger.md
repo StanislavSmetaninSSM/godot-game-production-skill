@@ -93,7 +93,9 @@ The same source object may not be rewritten under a new meaning.
 4. For every generated reference PNG, add one `target_gameplay_image` artifact with the
    exact authorization `authorization_id`, target ID, reference slot ID, plan ID,
    plan revision, aware `generated_at`, project-relative path, SHA-256, coverage,
-   and `imagegen_target` provenance.
+   and `imagegen_target` provenance. This legacy identifier is provider-neutral.
+   Read `references/image-generation.md` for neutral provider result and conversion
+   handling; its audit metadata does not rename or redefine this stored value.
 5. Assemble the complete authorized candidate batch, then record target approval
    on its contract version. Only after that approval may the manifest set the
    active visual contract ID.
@@ -137,7 +139,7 @@ for PENDING, `2` for FAILED, and `3` for invalid input.
 Path traversal, symlink escape, missing files, duplicate IDs, hash drift, invalid
 base chains, branch/cycle bases, missing source resolution, timestamp inversion,
 unbound artifacts, partial batches, or approval of an incomplete batch fail. The
-gate cannot prevent platform delivery of raw reference ImageGen bytes, but unbound
+gate cannot prevent platform delivery of raw generated reference bytes, but unbound
 reference bytes cannot enter an approved visual contract. Source production assets
 are assessed through the integrated build's evidence, not reference authorizations.
 

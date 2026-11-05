@@ -1,0 +1,17 @@
+{
+  "schema_version": "image-provider-registry/v1",
+  "providers": {
+    "kimi": {
+      "adapter_path": "references/providers/kimi.md",
+      "default_for_runtimes": [
+        "kimi"
+      ]
+    },
+    "codex": {
+      "adapter_path": "references/providers/codex.md",
+      "default_for_runtimes": [
+        "codex"
+      ]
+    }
+  }
+}

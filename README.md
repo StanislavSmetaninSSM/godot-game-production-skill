@@ -1,18 +1,19 @@
 # Godot Game Production
 
-`godot-game-production` is a Codex skill for creating, continuing, repairing, and broadly developing Godot 2D, 2.5D, and 3D games. It coordinates game intent, visual direction, mechanics, production evidence, and release decisions; it is not intended for a single isolated asset or a narrow audit.
+`godot-game-production` is a shared skill for Kimi Work and Codex for creating, continuing, repairing, and broadly developing Godot 2D, 2.5D, and 3D games. It coordinates game intent, visual direction, mechanics, production evidence, and release decisions; it is not intended for a single isolated asset or a narrow audit.
 
 ## What the skill enforces
 
 The workflow moves through `AUDIT -> SPECIFY -> VISUAL_PENDING -> VISUAL_APPROVED -> GODOT_FEASIBILITY -> CORE_LOOP -> PRODUCTION -> RELEASE`.
 
 Visual references are needs-derived rather than fixed in count. The user approves
-the complete slot set before ImageGen; the deterministic command then issues an
-exact batch authorization. One condition is that one authorized row budgets one generated result.
-A late visual delta repeats the decision and authorization flow, and a correction needs fresh authorization.
-The rule is that unauthorized raw output cannot enter verified evidence as an approved reference or a release result as proof.
-During approval, machine JSON stays in project files. Chat shows detailed,
-numbered image descriptions and approval questions in the user's language.
+the complete slot set before image generation through the selected image provider;
+the deterministic command then issues an exact batch authorization; one authorized row budgets one generated result. Before generation, read
+`godot-game-production/references/image-generation.md` and the selected provider's
+adapter. A late visual delta repeats the decision and authorization flow, and a
+correction needs fresh authorization; unauthorized raw output cannot enter verified evidence
+as an approved reference or a release result as proof. During approval,
+machine JSON stays in project files. Chat shows detailed, numbered image descriptions and approval questions in the user's language.
 
 Explicit user delegation can authorize a distinct independent reviewer to approve
 visual decisions. The evidence ledger preserves the real user instruction and
@@ -20,11 +21,12 @@ reviewer role, and binds the grant to the complete visual contract chain. Withou
 that delegation, the normal user approval flow remains required.
 
 After visual target approval, the agent independently chooses suitable existing
-assets, procedural/native authoring, ImageGen, or a combination for production
-art. It explicitly considers ImageGen for textures, sprites, decals, and other
-bitmap assets, generates and refines them without per-image approval, and checks
-their integration in Godot. A change to the approved visual direction reopens
-reference approval; routine asset production does not.
+assets, procedural/native authoring, the selected image provider, or a combination
+for production art. It explicitly considers image generation for textures, sprites,
+decals, and other bitmap assets through the neutral adapter, generates and refines
+them without per-image approval, and checks their integration in Godot. A change to
+the approved visual direction reopens reference approval; routine asset production
+does not.
 
 Important: screenshots are design evidence only. They never prove mechanics. Mechanics require evidence from the target Godot build that shows the input, state change, and outcome, with filmstrip or video evidence where the skill calls for it.
 
@@ -43,11 +45,11 @@ establish human enjoyment, pacing, replay value or native input quality.
 
 ## Prerequisites
 
-- Codex with skill loading enabled.
+- A supported host (Kimi Work or Codex) with skill loading enabled.
 - Git and a Godot project appropriate to the work being requested.
-- [GitHub Spec Kit](https://github.com/github/spec-kit) and [Superpowers](https://github.com/obra/superpowers) installed and available to Codex.
-- The separately installed [`spec-kit-superpowers-bridge`](https://github.com/StanislavSmetaninSSM/spec-kit-superpowers-bridge) workflow available to Codex. The skill requires that named workflow: Spec Kit owns durable constitution, specification, plan, tasks, and consistency; Superpowers owns execution.
-- An available image-generation capability when the visual-contract gate is reached; the skill uses Codex `imagegen` for initial and material visual re-entry.
+- [GitHub Spec Kit](https://github.com/github/spec-kit) and [Superpowers](https://github.com/obra/superpowers) installed and available to the current host.
+- The separately installed [`spec-kit-superpowers-bridge`](https://github.com/StanislavSmetaninSSM/spec-kit-superpowers-bridge) workflow available to the current host. The skill requires that named workflow: Spec Kit owns durable constitution, specification, plan, tasks, and consistency; Superpowers owns execution.
+- An available image-generation capability and selected provider when the visual-contract gate is reached. Use `godot-game-production/references/image-generation.md` and the provider adapter for initial and material visual re-entry.
 - Python 3.10+ for bundled diagnostic and validation scripts. Frame comparison
   requires Pillow and NumPy; motion and evidence checks use the standard library.
 
@@ -75,6 +77,61 @@ python3 "$installer" --repo StanislavSmetaninSSM/godot-game-production-skill --p
 ```
 
 Restart or reload Codex after installation if its current session does not discover the skill automatically.
+
+## Kimi Work installation and invocation
+
+1. Clone or download this repository and copy the same `godot-game-production/`
+   folder into `~/.agents/skills/godot-game-production/` without renaming it. The
+   installed entry point must be
+   `~/.agents/skills/godot-game-production/SKILL.md` (a
+   `godot-game-production/SKILL.md` path beneath the skills root), not a nested
+   repository-folder duplicate.
+2. Start a new session or reload skills so Kimi Work discovers the installation.
+3. Invoke `$godot-game-production` for a broad Godot production task.
+
+Kimi Work also needs the required Spec Kit, Superpowers, and bridge workflows. For
+image generation, the installed `image_generation:image_generation` capability and
+its credentials are prerequisites, not vendored secrets; this repository supplies
+neither the capability nor API keys. The prepared Kimi provider is the host default,
+and its adapter performs preflight before any generation.
+
+## Image provider selection and configuration
+
+Provider precedence is **explicit current-user choice → persisted project choice → host default**.
+The Kimi host default is `kimi`; the Codex host default is `codex`.
+The resolver only selects and validates the adapter: it performs no generation or provider availability check.
+The selected adapter performs its own preflight before generation.
+
+To persist a project choice, create the optional
+`docs/visual-contract/image-provider.json` beneath the project root. Its schema is
+`image-provider-selection/v1`, with exactly `schema_version` and `provider_id` fields; the prepared provider IDs are `kimi` and `codex`.
+
+```json
+{
+  "schema_version": "image-provider-selection/v1",
+  "provider_id": "kimi"
+}
+```
+
+Run these commands from the repository checkout to resolve the host defaults without
+generating images:
+
+```sh
+python godot-game-production/scripts/image_provider.py resolve --runtime kimi --project-root .
+python godot-game-production/scripts/image_provider.py resolve --runtime codex --project-root .
+```
+
+An explicit current-user choice overrides both lower-precedence sources:
+
+```sh
+python godot-game-production/scripts/image_provider.py resolve --runtime kimi --project-root . --provider codex
+```
+
+The override bypasses project configuration, including malformed persisted configuration.
+For an unknown, ambiguous, or unavailable selection, no fallback occurs.
+Selection and extension failures fail closed as specified in
+`godot-game-production/references/image-generation.md`; adding a custom provider does
+not change the portable visual-approval sequence.
 
 ## Safe updates
 

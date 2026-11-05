@@ -212,6 +212,32 @@ class DynamicVisualBehavioralScorerTests(unittest.TestCase):
             "write_paths": [str(decision_path), str(decision_report_path)],
         }
 
+    def trace_v3(
+        self, decision_path: Path, decision_report_path: Path
+    ) -> dict[str, object]:
+        return {
+            "schema_version": "dvc-trace/v3",
+            "session_id": "kimi-file-first-session",
+            "runtime": "kimi",
+            "image_provider": "kimi",
+            "model": "kimi-test-model",
+            "reasoning_effort": "not_applicable",
+            "fork_turns": "none",
+            "final_answer_count": 1,
+            "task_complete_count": 1,
+            "image_generation_call_count": 0,
+            "write_paths": [str(decision_path), str(decision_report_path)],
+        }
+
+    def trace_v3_for(self, decision: dict[str, object]) -> dict[str, object]:
+        pending = (
+            self.directory / "workspace" / "docs" / "visual-contract"
+            / "pending" / str(decision["decision_id"])
+        )
+        return self.trace_v3(
+            pending / "decision.json", pending / "decision-report.json"
+        )
+
     def score(
         self,
         case: str = "DVC-01",
@@ -457,6 +483,93 @@ class DynamicVisualBehavioralScorerTests(unittest.TestCase):
                     trace=trace,
                     score_report=self.directory / f"trace-{index}.json",
                 )
+
+    def test_v3_host_neutral_trace_passes_with_alternate_models(self) -> None:
+        decision = self.decision()
+        for index, model in enumerate(("kimi-test-model", "another-kimi-model")):
+            with self.subTest(model=model):
+                trace = self.trace_v3_for(decision)
+                trace["model"] = model
+                code, report_path = self.score(
+                    decision=decision,
+                    trace=trace,
+                    score_report=self.directory / f"v3-pass-{index}.json",
+                )
+                self.assertEqual(code, 0)
+                report = json.loads(report_path.read_text(encoding="utf-8"))
+                self.assertEqual(report["status"], "PASS")
+                self.assertEqual(report["failed_criteria"], [])
+
+    def test_v3_generation_call_fails_trace_policy(self) -> None:
+        decision = self.decision()
+        trace = self.trace_v3_for(decision)
+        trace["image_generation_call_count"] = 1
+        self.assert_fail(
+            "trace_policy",
+            decision=decision,
+            trace=trace,
+            score_report=self.directory / "v3-generated.json",
+        )
+
+    def test_v3_extra_or_missing_fields_return_three(self) -> None:
+        decision = self.decision()
+        extra = self.trace_v3_for(decision)
+        extra["unexpected"] = "not allowed"
+        missing = self.trace_v3_for(decision)
+        del missing["image_provider"]
+        for index, trace in enumerate((extra, missing)):
+            with self.subTest(index=index):
+                code, _ = self.score(
+                    decision=decision,
+                    trace=trace,
+                    score_report=self.directory / f"v3-fields-{index}.json",
+                )
+                self.assertEqual(code, 3)
+
+    def test_legacy_v2_trace_policy_remains_fixed(self) -> None:
+        decision = self.decision()
+        pending = (
+            self.directory / "workspace" / "docs" / "visual-contract"
+            / "pending" / str(decision["decision_id"])
+        )
+        valid = self.trace(
+            pending / "decision.json", pending / "decision-report.json"
+        )
+        code, report_path = self.score(
+            decision=decision,
+            trace=valid,
+            score_report=self.directory / "v2-legacy-valid.json",
+        )
+        self.assertEqual(code, 0)
+        self.assertEqual(
+            json.loads(report_path.read_text(encoding="utf-8"))["status"],
+            "PASS",
+        )
+        invalid = dict(valid)
+        invalid["model"] = "another-legacy-model"
+        self.assert_fail(
+            "trace_policy",
+            decision=decision,
+            trace=invalid,
+            score_report=self.directory / "v2-legacy-invalid.json",
+        )
+
+    def test_unknown_trace_version_fails_closed(self) -> None:
+        decision = self.decision()
+        pending = (
+            self.directory / "workspace" / "docs" / "visual-contract"
+            / "pending" / str(decision["decision_id"])
+        )
+        trace = self.trace(
+            pending / "decision.json", pending / "decision-report.json"
+        )
+        trace["schema_version"] = "dvc-trace/unknown"
+        code, _ = self.score(
+            decision=decision,
+            trace=trace,
+            score_report=self.directory / "unknown-trace-version.json",
+        )
+        self.assertEqual(code, 3)
 
     def test_malformed_or_unsafe_inputs_return_three(self) -> None:
         self.assertEqual(

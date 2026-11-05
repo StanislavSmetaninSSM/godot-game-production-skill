@@ -31,7 +31,7 @@ CASE_FIELDS = {
     "required_proof_gates",
     "requires_scope_question",
 }
-TRACE_FIELDS = {
+TRACE_FIELDS_V2 = {
     "schema_version",
     "session_id",
     "model",
@@ -40,6 +40,19 @@ TRACE_FIELDS = {
     "final_answer_count",
     "task_complete_count",
     "imagegen_call_count",
+    "write_paths",
+}
+TRACE_FIELDS_V3 = {
+    "schema_version",
+    "session_id",
+    "runtime",
+    "image_provider",
+    "model",
+    "reasoning_effort",
+    "fork_turns",
+    "final_answer_count",
+    "task_complete_count",
+    "image_generation_call_count",
     "write_paths",
 }
 CRITERIA = (
@@ -199,16 +212,27 @@ def _catalog(contract):
 
 
 def _validate_trace(trace):
-    if not isinstance(trace, dict) or set(trace) != TRACE_FIELDS:
+    if not isinstance(trace, dict):
+        raise Unsafe("trace fields")
+    version = trace.get("schema_version")
+    if version == "dvc-trace/v2":
+        fields = TRACE_FIELDS_V2
+        generation_counter = "imagegen_call_count"
+        identity_fields = ()
+    elif version == "dvc-trace/v3":
+        fields = TRACE_FIELDS_V3
+        generation_counter = "image_generation_call_count"
+        identity_fields = ("runtime", "image_provider")
+    else:
+        raise Unsafe("trace version")
+    if set(trace) != fields:
         raise Unsafe("trace fields")
     for key in (
         "schema_version", "session_id", "model", "reasoning_effort", "fork_turns"
-    ):
+    ) + identity_fields:
         if not isinstance(trace[key], str) or not trace[key]:
             raise Unsafe("trace scalar")
-    for key in (
-        "final_answer_count", "task_complete_count", "imagegen_call_count"
-    ):
+    for key in ("final_answer_count", "task_complete_count", generation_counter):
         if (
             not isinstance(trace[key], int)
             or isinstance(trace[key], bool)
@@ -242,17 +266,28 @@ def _trace_policy(trace, decision_path, decision_report_path, decision_id):
     _validate_trace(trace)
     expected_writes = {decision_path, decision_report_path}
     actual_writes = [Path(value).resolve() for value in trace["write_paths"]]
-    return (
-        (
-            trace["schema_version"],
-            trace["model"],
-            trace["reasoning_effort"],
-            trace["fork_turns"],
-            trace["final_answer_count"],
-            trace["task_complete_count"],
-            trace["imagegen_call_count"],
+    if trace["schema_version"] == "dvc-trace/v2":
+        policy = (
+            (
+                trace["schema_version"],
+                trace["model"],
+                trace["reasoning_effort"],
+                trace["fork_turns"],
+                trace["final_answer_count"],
+                trace["task_complete_count"],
+                trace["imagegen_call_count"],
+            )
+            == ("dvc-trace/v2", "gpt-5.6-terra", "medium", "none", 1, 1, 0)
         )
-        == ("dvc-trace/v2", "gpt-5.6-terra", "medium", "none", 1, 1, 0)
+    else:
+        policy = (
+            trace["fork_turns"] == "none"
+            and trace["final_answer_count"] == 1
+            and trace["task_complete_count"] == 1
+            and trace["image_generation_call_count"] == 0
+        )
+    return (
+        policy
         and len(actual_writes) == 2
         and set(actual_writes) == expected_writes
         and _canonical_pending_paths(

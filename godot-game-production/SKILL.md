@@ -85,6 +85,9 @@ Judge the boundary by what the image decides, not its filename: a texture implem
 - Read `references/quality-tools.md` when using `scripts/frame_compare.py` or `scripts/motion_check.py` on captured images or project-exported telemetry. These are diagnostic helpers, not Godot capture adapters or acceptance gates; their results cannot replace the existing evidence and review requirements.
 - Read `references/production-operations.md` when the current production interval has two or more implementation slices scheduled to overlap or be delegated concurrently, or when multiple agents or worktrees will implement related parts of the same candidate. Do not read it merely for several serial steps in one bounded slice.
 - Read `references/gameplay-evidence.md` when planning or judging playtest matrices, fixtures, seeded coverage, or integrated player-journey evidence. This routing complements the existing post-approval core-loop use of that reference.
+- Read `references/mechanic-playtests.md` when developing/reworking a core mechanic or diagnosing stalled feel tuning: use production-code gyms with shared live parameters and falsifiable experience hypotheses, then verify the integrated journey.
+- Read `references/mechanic-ideas.md` when a core/signature mechanic needs a new or materially revised rule: record distinctive alternatives and owner-aware interactions in the existing Spec Kit feature, respecting prior approvals.
+- Read `references/narrative-staging.md` when approved work includes story, dialogue or a cutscene: bind beats to gameplay and stage storyboard, checked Godot blockout and final production with state-safe return to play.
 - Read `references/procedural-art.md` for generated visual systems or repeated assets.
 - For 2D or 2.5D, read `references/godot-2d.md` and do not read the 3D reference.
 - For 3D, read `references/godot-3d.md` and do not read the 2D reference.

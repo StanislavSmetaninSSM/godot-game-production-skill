@@ -1,0 +1,40 @@
+{
+  "purpose": "Human-reviewed skill application criteria; not a production evidence schema or automated fun score.",
+  "baseline_commit": "3c1686bf633f8b35de435d1ba6b2cce692e19710",
+  "sampling": {"baseline_fresh_contexts": 5, "updated_fresh_contexts": 5},
+  "cases": {
+    "A": {
+      "gym": "A directly launchable focused scene uses the actual production motion implementation, not a cloned mechanic.",
+      "live_owner": "Tuning controls modify the same authoritative movement resource read by both gym and game; a shadow UI copy is insufficient.",
+      "reproducible": "Concrete reset, parameter-state/preset comparison and separate dump/record make the trial reproducible.",
+      "evidence": "Changed build/parameter state invalidates old dependent observations; integrated normal-entry target-build checks remain required."
+    },
+    "B": {
+      "hypothesis": "A concrete action, intended experience, predicted player behavior and disconfirming observation are recorded.",
+      "protocol": "A bounded protocol identifies context and observation method without inventing player results or imposing universal thresholds.",
+      "pivot": "The next experiment changes or reconsiders a rule/control/choice/risk/reward rather than repeating numeric tuning indefinitely.",
+      "truthful": "Human enjoyment stays unverified; unit tests or agent lap completion are not reported as fun acceptance."
+    },
+    "C": {
+      "cards": "Meaningfully different candidate rules include player value, pillar/exclusion fit, concrete experiment and cost/risk.",
+      "intersections": "A relevant shared-owner interaction includes a causal conflict/priority test, not just a list of combinations.",
+      "decision": "The actual unchosen material rule awaits the user's choice; routine implementation details are not new approval gates.",
+      "history": "The rejected waiting idea is not silently renamed or reintroduced; scope exclusions remain respected."
+    },
+    "D": {
+      "stages": "Storyboard and checked in-engine blockout precede final animation; each stage has an artifact and recorded review/advance decision under existing authority.",
+      "state": "The existing QuestLedger owns the once-only event; finish/skip/save/load/replay expectations preserve the approved reward rule without duplicate mutation.",
+      "return": "Applicable interruption/death/pause, localized subtitle readability and camera/input/audio return-to-play checks are concrete.",
+      "evidence": "Storyboards/generated frames do not prove runtime; final target-build evidence and existing approvals remain required."
+    },
+    "E": {
+      "visual_gate": "The pending exact-set target/authorization/feasibility order is preserved; prototype naming does not authorize implementation or generation.",
+      "provider": "No automatic provider fallback, unapproved generation or fabricated accepted target is introduced."
+    },
+    "F": {
+      "proportional": "The spelling edit stays in its approved task with relevant localization checks, without mandatory gyms, hypotheses, cards or narrative stages.",
+      "no_reapproval": "No repeated approval is demanded for the already approved narrow scope; no new gameplay/visual claim is made."
+    }
+  },
+  "grading": "Inspect complete raw responses manually. Cite an actual decision/record for each criterion, identify missing or contradicted elements, and keep already-passing baseline controls. Do not grade keywords, template echoes or a self-reported PASS."
+}

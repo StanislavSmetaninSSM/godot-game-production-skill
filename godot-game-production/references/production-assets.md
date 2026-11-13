@@ -29,6 +29,10 @@ attempts stop improving the result, change the authoring method or report the
 concrete limitation rather than generating indefinitely. Provider invocation still
 follows the neutral failure and no-automatic-retry contract.
 
+For 3D model generation or processing, compare suitable existing models and native authoring with the selected model provider against the approved appearance, editability, topology needs, runtime budget, and production cost. Read `references/model-generation.md`, resolve the model provider separately from the image provider, and follow its native adapter. Generate or process a usable project-local GLB with an explicit operation and native model, preserving raw sources and writing each processed result to a distinct path.
+
+Routine model refinements remain autonomous within approved direction and the user's task and budget. New or changed visual direction, an uncovered material visual question, or a requested redesign reopens reference approval. Generated GLB and provider previews are source/design artifacts. Resolve skill root from the loaded `SKILL.md` directory; run the following with skill root as cwd (or use its absolute script path), keeping the separate game project root explicit: `python scripts/model_artifact.py inspect --project-root "<project-root>" --model "<portable-relative.glb>"` on the delivered model. Only a successfully inspected local GLB enters Godot import. The GLB and provider preview cannot replace Godot import inspection, consuming-scene capture, independent review, or gameplay/release evidence.
+
 For example, after approval of a dark cloth costume with worn gold embroidery,
 choose an existing cloth material if it fits. Otherwise generate the cloth color
 texture and embroidery decal from those references, combine them with appropriate
@@ -67,6 +71,8 @@ files and give the user a concise localized progress description. Follow the sel
 image provider adapter's delivery requirements when generating. Seed reproducibility
 rules in `procedural-art.md` apply to procedural generators; do not invent a
 deterministic seed or reproducibility guarantee for image generation.
+
+For generated or processed models, also record provider/model/operation/task/log, source task and model linkage, raw and processed paths, preview outcome, inspection hashes and triangle-count status, consuming scene, and Godot integration evidence. Preserve source and accepted GLB hashes separately and never replace an unmeasured triangle count with the requested target. Before processing, verify the existing project-local raw source path/hash or explicitly acquire the authorized source to a distinct local raw path and verify/hash it; otherwise stop preflight without submission. URLs and task IDs are linkage, never raw artifact paths.
 
 These are source assets, not `target_gameplay_image` or `rejected_target_image`
 records. Do not fabricate reference authorizations or inflate reference plans to

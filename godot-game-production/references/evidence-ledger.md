@@ -146,3 +146,9 @@ are assessed through the integrated build's evidence, not reference authorizatio
 Retain inside-root, SHA-256, Godot-runtime capture, independent review, and
 target-Godot input/state/outcome rules. A screenshot is design evidence, never
 mechanics or release proof.
+
+## Generated model source boundary
+
+Generated GLB and provider previews are production source/design artifacts. They are not `target_gameplay_image` records and not `imagegen_target` provenance, and this capability adds no new evidence fields or schema. Keep their approved-target/task linkage, input references, prompts, provider/model/operation/task/log, raw and processed paths, preview outcome, hashes, and measured triangle-count status in project asset notes.
+
+A source GLB or provider preview cannot satisfy Godot import inspection, consuming-scene capture, target-build capture, independent review, or gameplay/release evidence. Only a successfully inspected local GLB enters Godot import; its subsequent integration remains subject to the existing ledger and runtime gates.

@@ -17,6 +17,8 @@ description: Use when creating, continuing, repairing, or broadly developing a G
 
 **REQUIRED IMAGE ADAPTER:** For the initial visual contract, every material visual re-entry, and production bitmap assets when generation or editing is the suitable authoring method, read `references/image-generation.md`, resolve the selected image provider, and follow its adapter. Use the host runtime adapter for native invocation and bitmap display; never route the portable workflow through a Codex-only generation requirement.
 
+**REQUIRED MODEL ADAPTER:** For `production_asset` 3D model generation or processing within approved direction and the existing task/budget, read `references/model-generation.md`, resolve the selected model provider, and follow its adapter plus the host runtime's native invocation path. Model and image providers are not interchangeable. Generated GLB and provider previews are production source/design artifacts; they do not create reference authorization or replace Godot evidence.
+
 For implementation use `test-driven-development`; for failures use `systematic-debugging`; before completion use `requesting-code-review` and `verification-before-completion`.
 
 ## Start or resume

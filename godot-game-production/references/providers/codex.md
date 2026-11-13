@@ -1,3 +1,4 @@
+<!-- provider-kind: image -->
 # Codex image provider
 
 Prepared provider adapter for the Codex runtime. It implements the neutral contract

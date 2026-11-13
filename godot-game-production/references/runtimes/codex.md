@@ -4,6 +4,14 @@ Use this adapter when the portable Godot production workflow runs in Codex. The
 portable approval, authorization, evidence, and review gates remain authoritative;
 this document only maps native Codex capabilities.
 
+Resolve **skill root** as the directory containing the loaded `godot-game-production`
+`SKILL.md`. The commands below run with that directory as cwd; `scripts/` is directly
+inside it. From another cwd, use the equivalent absolute script path beneath that
+resolved skill root and quote it. `<project-root>` is the separate existing absolute
+Godot project directory; quote it when it contains spaces. Read `adapter_path` relative
+to skill root, never project root. Repository checkout examples in README.md explicitly
+use the repository root, one directory above this installed-package layout.
+
 ## Native workflow capabilities
 
 Invoke the shared workflow as `$godot-game-production`. Use the existing Codex skill
@@ -27,7 +35,7 @@ Before any image generation, read `references/image-generation.md`, then resolve
 provider from the skill root and current Godot project root:
 
 ```sh
-python godot-game-production/scripts/image_provider.py resolve --runtime codex --project-root <project-root>
+python scripts/image_provider.py resolve --runtime codex --project-root "<project-root>"
 ```
 
 Resolution only selects an adapter; it performs no generation. A nonzero exit or
@@ -50,3 +58,24 @@ separate project-local PNG, display and hash that accepted PNG while retaining t
 raw file and conversion record.
 
 The prepared Codex path needs no Kimi skill, script, credential, or launcher process.
+
+## Select and invoke the model provider
+
+Before any 3D model generation or processing, read `references/model-generation.md` and
+resolve a model provider separately from the image provider:
+
+```sh
+python scripts/model_provider.py resolve --runtime codex --project-root "<project-root>"
+```
+
+Codex has no model-provider default. It requires explicit or persisted project selection;
+without either, resolution fails closed and no fallback occurs. Read the returned
+skill-relative `adapter_path` and satisfy that selected adapter's own native invocation
+and prerequisites. Resolution performs no generation, upload, credential check, or
+availability preflight.
+
+The portable Codex route does not acquire a Kimi credential, native skill, launcher, or
+script dependency merely by supporting model providers. If an explicitly selected
+adapter itself needs a host-specific capability or credential, report that prerequisite
+without silently substituting another provider. Provider previews and GLB files remain
+source/design artifacts and never replace Godot evidence.

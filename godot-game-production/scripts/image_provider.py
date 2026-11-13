@@ -111,34 +111,38 @@ def _load_registry(skill_root: Path) -> tuple[dict[str, object], dict[str, list[
 
 
 def _is_reparse_point(path: Path) -> bool:
-    if path.is_symlink():
-        return True
-    if not path.exists():
-        return False
-    is_junction = getattr(path, "is_junction", None)
-    if is_junction is not None and is_junction():
-        return True
-    attributes = getattr(path.lstat(), "st_file_attributes", 0)
-    return bool(attributes & getattr(stat, "FILE_ATTRIBUTE_REPARSE_POINT", 0))
-
-
-def _read_selection(project_root: Path) -> str | None:
     try:
-        if project_root.is_symlink() or not project_root.is_dir():
+        status = path.lstat()
+    except FileNotFoundError:
+        return False
+    attributes = getattr(status, "st_file_attributes", 0)
+    return stat.S_ISLNK(status.st_mode) or bool(
+        attributes & getattr(stat, "FILE_ATTRIBUTE_REPARSE_POINT", 0)
+    )
+
+
+def _resolve_project_root(project_root: Path) -> Path:
+    try:
+        if _is_reparse_point(project_root) or not project_root.is_dir():
             raise SchemaError("unsafe project root")
-        resolved_root = project_root.resolve(strict=True)
+        return project_root.resolve(strict=True)
     except (OSError, RuntimeError):
         raise SchemaError("cannot inspect project root") from None
 
+
+def _read_selection(resolved_root: Path) -> str | None:
     selection_path = resolved_root / "docs" / "visual-contract" / "image-provider.json"
     candidate = resolved_root
     try:
-        for part in ("docs", "visual-contract", "image-provider.json"):
+        parts = ("docs", "visual-contract", "image-provider.json")
+        for index, part in enumerate(parts):
             candidate = candidate / part
             if _is_reparse_point(candidate):
                 raise SchemaError("unsafe provider selection")
             if not candidate.exists():
                 return None
+            if index < len(parts) - 1 and not candidate.is_dir():
+                raise SchemaError("unsafe provider selection")
         if not candidate.is_file():
             raise SchemaError("unsafe provider selection")
         candidate.resolve(strict=True).relative_to(resolved_root)
@@ -153,6 +157,25 @@ def _read_selection(project_root: Path) -> str | None:
     if selection["schema_version"] != "image-provider-selection/v1":
         raise SchemaError("unsupported provider selection schema")
     return _validate_id(selection["provider_id"], "provider")
+
+
+
+def _validate_adapter_kind(path: Path) -> None:
+    """Check routing metadata without interpreting the adapter's instructions."""
+    try:
+        text = path.read_text(encoding="utf-8")
+    except (OSError, UnicodeError):
+        raise SchemaError("cannot read provider adapter") from None
+    declarations = [
+        match for match in re.finditer(r"<!--(.*?)(?:-->|$)", text, re.DOTALL)
+        if re.match(r"\s*provider-kind\b", match.group(1), re.IGNORECASE)
+    ]
+    expected = "<!-- provider-kind: image -->"
+    if declarations:
+        if (len(declarations) != 1 or declarations[0].start() != 0
+                or declarations[0].group(0) != expected
+                or text.splitlines()[0] != expected):
+            raise SchemaError("provider adapter kind is conflicting or malformed")
 
 
 def _validate_adapter(skill_root: Path, adapter_path: object) -> str:
@@ -177,6 +200,7 @@ def _validate_adapter(skill_root: Path, adapter_path: object) -> str:
         raise SchemaError("provider adapter escapes skill root") from None
     except OSError:
         raise SchemaError("cannot inspect provider adapter") from None
+    _validate_adapter_kind(candidate)
     return PurePosixPath(*parts).as_posix()
 
 
@@ -186,8 +210,9 @@ def resolve_provider(
     override: str | None = None,
     skill_root: Path | None = None,
 ) -> dict[str, str]:
-    """Resolve and validate a provider without I/O beyond registry/selection reads."""
+    """Resolve a provider using local configuration and adapter metadata only."""
     runtime_id = _validate_id(runtime, "runtime")
+    resolved_project_root = _resolve_project_root(project_root)
     root = skill_root if skill_root is not None else Path(__file__).resolve().parent.parent
     providers, defaults = _load_registry(root)
 
@@ -195,7 +220,7 @@ def resolve_provider(
         provider_id = _validate_id(override, "provider")
         source = "override"
     else:
-        selected = _read_selection(project_root)
+        selected = _read_selection(resolved_project_root)
         if selected is not None:
             provider_id = selected
             source = "project"

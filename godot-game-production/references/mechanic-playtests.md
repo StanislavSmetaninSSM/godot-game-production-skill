@@ -16,6 +16,28 @@ does not authorize implementation. A focused gym supports CORE_LOOP/PRODUCTION a
 feeds the integrated journey in `gameplay-evidence.md`; it is not a replacement stage
 or release gate. Keep the existing visual, provider and independent-review contracts.
 
+At planning time, place the applicable mechanic quality decision before production
+of the levels/content that depends on it. Reuse the active feature's task dependencies,
+gym record and playtest matrix; do not leave this as a final polish demonstration.
+Independent authorized work can continue while a dependent claim is pending.
+
+## Make the promise observable
+
+Before building or substantially reworking the mechanic, add this row to the existing
+task/matrix, using the original request and its approved interpretation:
+
+`original promise | agreed observable property/action transition | initial state,
+input and expected feedback/outcome | actual target-build clip/trace | independent
+disposition and limits | dependent content task`
+
+For example, an agreed flowing leap→wall attachment→climb→ledge→run needs observation
+of those transitions at gameplay speed, not separate jump/climb buttons or a parameter
+dump. Choose properties from this game's promise: the example is not a mandatory
+parkour move list. When a broad genre promise has been materially reduced to a few
+actions, resolve whether that interpretation is sufficient through the existing
+specification authority before building on it. A user's explicit concrete selection
+remains the contract; do not add unrequested moves.
+
 ## Build a gym around the real mechanic
 
 Create a directly launchable scene that exercises one approved mechanic without menu
@@ -102,6 +124,26 @@ options and reasons so the next session does not repeat them. Apply existing sto
 rules; do not import a universal hours/rounds/pivots quota.
 
 ## Carry the result into the game
+
+Give the reviewer the original promise, agreed observable rows and actual build
+clips before builder explanations. The independent decision states which property
+or transition is supported, contradicted or still unobserved, with the concrete
+frame/state/outcome and its limits. Use the existing disposition and ledger, not a
+new status schema. A working baseline may be retained with that evidence; there is
+no obligation to improve it or compare a quota of variants.
+
+- **Observed mismatch:** keep the affected acceptance non-passing; correct or
+  reconsider the bounded approach within current authority and stop rules.
+- **Missing observation:** keep the affected claim unverified and collect the
+  missing comparable capture/input/state evidence first. Missing footage alone
+  does not establish a defect or justify a mechanic rewrite.
+
+Complete reports, a successful isolated action, a high score or the word prototype
+cannot close a missing agreed transition. Do not lower criteria to pass a candidate.
+If a material scope/quality tradeoff is needed, resolve that difference through
+existing authority; builder acceptance cannot silently amend the original promise.
+Human feel/enjoyment remains unverified without the applicable human observations;
+that does not create a new human-wait gate for every autonomous task.
 
 Record selected values and their actual application to the production owner. A
 changed build or effective parameter state invalidates dependent earlier evidence.

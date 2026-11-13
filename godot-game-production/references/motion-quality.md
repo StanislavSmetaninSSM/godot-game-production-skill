@@ -5,6 +5,11 @@ and time-driven effects. Preserve the approved technique: frame-by-frame sprites
 2D rigs, 3D skeletal animation and physical/procedural motion are all valid.
 Do not replace a style with cut-out rigs merely to simplify measurement.
 
+For an approved generated frame-based 2D technique, read
+`animation-2d-production.md` for the video/purple-key and individual-image branches.
+The asset recipe supplies source frames; the coverage and target-build checks below
+still establish motion quality and do not replace the mechanic's promised behavior.
+
 ## Declare the coverage before capture
 
 Extend the existing playtest matrix with one row per meaningful claim. Give each

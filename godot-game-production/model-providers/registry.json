@@ -1,0 +1,9 @@
+{
+  "schema_version": "model-provider-registry/v1",
+  "providers": {
+    "tripo": {
+      "adapter_path": "references/model-providers/tripo.md",
+      "default_for_runtimes": ["kimi"]
+    }
+  }
+}

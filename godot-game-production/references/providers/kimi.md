@@ -1,3 +1,4 @@
+<!-- provider-kind: image -->
 # Kimi image provider
 
 Prepared provider adapter for the Kimi runtime. It implements the neutral contract in
@@ -7,7 +8,7 @@ evidence gates.
 ## Native capability and preflight
 
 Invoke the native skill `image_generation:image_generation`. Read its installed
-`SKILL.md` to resolve the plugin root: it is two directories above that skill file and
+`SKILL.md` to resolve the plugin root: it is two directories above the directory containing that skill file and
 contains `kimi.plugin.json`. Use the resolved absolute path for every bundled script
 invocation, including checks, uploads, launch, and monitoring.
 
@@ -17,7 +18,17 @@ the agent-gw Python SDK, version 0.2.6 or newer. Its documented dependency comma
 because that command can install or upgrade the SDK. Confirm an API key through the
 provider-supported `api_key=...`, `KIMI_API_KEY`, or `~/.kimi/agent-gw.json` source.
 Do not expose or vendor the credential. Use one Python interpreter for setup, launch,
-and monitoring, with native Windows Python on Windows.
+and monitoring. On Windows, launch both `image_generation_launch.py` and
+`image_generation_watch.py` directly with a validated native `pythonw.exe`, never an
+outer console Python wrapper. Prefer the runtime-provided `image_pythonw`; if absent
+or invalid, follow the loaded native skill's bundled interpreter resolver (currently
+`scripts/resolve_image_powershell.sh`), using its absolute plugin-root path. Reuse that
+validated interpreter for the job and resumed watchers. Do not guess interpreter paths.
+Redirect both streams to unique launcher/watcher report files, explicitly wait for
+pythonw to exit and retain its exit status. In PowerShell, use a waiting process
+invocation with `-WindowStyle Hidden` and both streams redirected; a GUI executable
+invocation alone does not guarantee waiting. These Windows rules supplement, rather
+than replace, the installed native skill's current launch examples.
 
 Before invocation, validate the neutral request, destination, provider availability,
 and these constraints:

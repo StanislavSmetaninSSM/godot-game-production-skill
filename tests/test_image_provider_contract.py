@@ -18,7 +18,7 @@ class KimiRuntimeAndProviderContractTests(unittest.TestCase):
             "image_generation:image_generation",
             "ReadMediaFile",
             "native `Skill`",
-            "godot-game-production/scripts/image_provider.py",
+            "scripts/image_provider.py",
             "adapter_path",
             "references/image-generation.md",
         ):

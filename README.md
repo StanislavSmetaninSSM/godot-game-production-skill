@@ -95,6 +95,90 @@ its credentials are prerequisites, not vendored secrets; this repository supplie
 neither the capability nor API keys. The prepared Kimi provider is the host default,
 and its adapter performs preflight before any generation.
 
+## 3D model provider installation, selection, and artifacts
+
+The portable 3D workflow is documented in
+[`godot-game-production/references/model-generation.md`](godot-game-production/references/model-generation.md).
+Its prepared Tripo adapter is
+[`godot-game-production/references/model-providers/tripo.md`](godot-game-production/references/model-providers/tripo.md).
+Python 3.10+ is sufficient for offline provider resolution and GLB inspection; these
+operations need no additional package, API key, or network access.
+
+Actual generation and processing through the prepared `tripo` provider additionally
+require the separately installed `model3d_generation:model3d_generation` capability,
+its documented native launcher/watcher prerequisites, and Tripo API access with the
+required credentials. Those native prerequisites and credentials are external and
+**not vendored** by this repository. The adapter preflights their availability before
+submission; resolving a provider does not check credentials or paid-service
+availability.
+
+### Select a model provider
+
+Model-provider precedence is **explicit current-user choice → persisted project choice → host default**.
+The Kimi host default is `tripo`. Codex has no model-provider default and therefore
+requires an explicit or persisted project choice. Run these deterministic commands
+from the repository checkout; replace the project-root `.` with the actual Godot
+project root when it differs:
+
+```sh
+python godot-game-production/scripts/model_provider.py resolve --runtime kimi --project-root .
+python godot-game-production/scripts/model_provider.py resolve --runtime codex --project-root . --provider tripo
+```
+
+To persist a project choice, create `docs/visual-contract/model-provider.json` beneath
+the Godot project root with exactly these fields:
+
+```json
+{
+  "schema_version": "model-provider-selection/v1",
+  "provider_id": "tripo"
+}
+```
+
+An explicit `--provider <provider-id>` overrides and bypasses persisted project
+selection. Unknown, ambiguous, unavailable, malformed, or unsafe selections fail
+closed with no automatic fallback to another model provider or to an image provider.
+Model and image registries, selection files, resolver commands, and adapter documents
+remain separate.
+
+### Native operations and retained artifacts
+
+The prepared adapter supports the five separately authorized operations `generate`,
+`texture`, `segment`, `complete`, and `decimate`. Follow the prepared adapter for
+native models, flags, source/task compatibility, launcher/watcher use, and limits;
+this README intentionally does not duplicate all native flags. There is no common model-generation CLI:
+the selected adapter owns native invocation.
+
+Retain the raw model from generation and each distinct processed model output without
+overwriting its source. Record provider, native model, operation, upstream task and
+log identities, raw/processed paths and hashes, input references, and approved target
+linkage as model provenance in project asset notes. Preview outcome is independent:
+an unavailable or failed preview does not invalidate a saved valid model and never
+causes duplicate generation.
+
+Before Godot import, inspect the accepted local GLB from the repository checkout:
+
+```sh
+python godot-game-production/scripts/model_artifact.py inspect --project-root "<project-root>" --model "<portable-relative.glb>"
+```
+
+The inspector checks safe local containment, GLB 2.0 structure, mesh primitives,
+SHA-256, and triangle-count status. It does not prove visual quality, scale, pivot,
+materials, rigging, animation, Godot import success, consuming-scene behavior, or
+gameplay evidence; the existing Godot and independent-review gates remain mandatory.
+
+A custom generator follows the neutral contract with exactly two integration
+artifacts: one model-registry entry and one neutral adapter document. It does not
+change image-provider configuration or portable visual approval, and a hypothetical
+test provider is not added to the prepared production registry.
+
+**Live provider testing is not part of the default validation.** The deterministic
+suites use local fixtures and do not upload references, submit jobs, download
+previews, or contact Tripo API. Real generation, processing, upload, watcher, preview
+download, or other live/billable provider testing requires separate explicit authorization
+and the native prerequisites above. Local resolution and GLB inspection
+remain offline and do not establish live-provider success.
+
 ## Image provider selection and configuration
 
 Provider precedence is **explicit current-user choice → persisted project choice → host default**.
@@ -339,3 +423,23 @@ ledgers without that extension retain their original behavior.
 ## License
 
 This project is released under the [Unlicense](LICENSE).
+
+### Adapter kind and installed layout
+
+Runtime guide commands run from the installed skill directory containing `SKILL.md`,
+so their scripts are `scripts/image_provider.py`, `scripts/model_provider.py` and
+`scripts/model_artifact.py`. The repository-root examples above deliberately include
+the `godot-game-production/` prefix. Resolve absolute script paths from the loaded
+skill when running from elsewhere, and keep the game project root explicit.
+
+A custom model adapter begins with `<!-- provider-kind: model -->` on its first line.
+Prepared image adapters declare `<!-- provider-kind: image -->`; legacy unmarked image
+adapters remain supported. Conflicting, malformed or repeated declarations fail
+closed. The marker belongs to the existing adapter document: a custom provider still
+requires exactly its registry entry and adapter document, at any safe relative path.
+
+The GLB inspector verifies bounded container/storage and supported byte-backed
+triangle accounting. Unsupported external, sparse or compressed geometry yields
+`triangle_count=null` / `unavailable`, never a fabricated budget claim. It is not a
+full glTF validator and does not replace Godot import or runtime evidence. Original
+non-GLB processing sources are preserved and hashed separately from converted GLB.

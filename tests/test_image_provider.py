@@ -534,7 +534,6 @@ class ImageProviderTests(unittest.TestCase):
         for provider in ("kimi", "codex"):
             adapter = ROOT / "godot-game-production" / "references" / "providers" / f"{provider}.md"
             self.assertTrue(adapter.is_file())
-            self.assertTrue(adapter.read_text(encoding="utf-8").startswith("# "))
 
 
 if __name__ == "__main__":

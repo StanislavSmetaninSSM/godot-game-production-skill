@@ -32,6 +32,17 @@ Important: screenshots are design evidence only. They never prove mechanics. Mec
 
 No showcase game, sample project, templates, or Godot assets are bundled in this repository.
 
+Game-design work conditionally loads three practical guides: production-code mechanic
+gyms with live shared tuning and experience hypotheses, distinctive mechanic cards
+with owner-aware interactions, and storyboard → checked engine blockout → final
+narrative staging. Records remain in the existing Spec Kit feature; these practices
+do not replace visual approval, integrated Godot evidence or human-play observations.
+See [mechanic playtests](godot-game-production/references/mechanic-playtests.md),
+[mechanic ideas](godot-game-production/references/mechanic-ideas.md) and
+[narrative staging](godot-game-production/references/narrative-staging.md).
+Adapted workflow ideas credit studioigor-skill under its
+[retained MIT notice](godot-game-production/references/third-party-notices.md).
+
 For concurrent production work, the skill conditionally loads
 `references/production-operations.md` to keep one authoritative owner per mutable
 game fact, define measurable conflict-aware slices, and verify their integrated

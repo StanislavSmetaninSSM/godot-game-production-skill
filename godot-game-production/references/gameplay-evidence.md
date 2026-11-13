@@ -31,6 +31,13 @@ acceptance. Preserve candidate identity and fix the adapter before long captures
 
 ## Playtest matrix
 
+For a new/reworked mechanic or stalled feel tuning, use `mechanic-playtests.md` for
+the focused production-code gym, shared live parameter record and falsifiable
+experience hypothesis. A gym test still needs the integrated journey above; record
+its effective parameter state and invalidate dependent observations when it changes.
+Use `mechanic-ideas.md` when the unresolved choice is the rule/interaction itself,
+and `narrative-staging.md` for approved narrative scenes and their interruption paths.
+
 Before repeated playtests, record one row per planned run:
 
 | Field | Required content |

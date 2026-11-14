@@ -225,6 +225,60 @@ class DelegationTests(unittest.TestCase):
         self.assertEqual("VERIFIED", self.evaluate()["overall"])
         self.assertEqual(0, self.cli().returncode)
 
+    def test_fresh_delegated_reviewer_preserves_historical_approvals(self):
+        for with_delta in (False, True):
+            with self.subTest(with_delta=with_delta):
+                self.setUp()
+                if with_delta:
+                    self.append_delta()
+                historical = copy.deepcopy(self.data["visual_contract_versions"])
+                approval_bytes = {
+                    row["path"]: (self.root / row["path"]).read_bytes()
+                    for row in self.data["artifacts"]
+                    if row["id"].startswith(("scope", "target-approval"))
+                }
+                self.reviewer = "fresh-independent-reviewer"
+                self.review()["reviewer_id"] = self.reviewer
+                self.grant()
+                self.assertEqual("VERIFIED", self.evaluate()["overall"])
+                self.assertEqual(historical, self.data["visual_contract_versions"])
+                for path, original in approval_bytes.items():
+                    self.assertEqual(original, (self.root / path).read_bytes())
+
+    def test_fresh_delegated_reviewer_cli_accepts_full_chain(self):
+        self.append_delta()
+        historical = copy.deepcopy(self.data["visual_contract_versions"])
+        self.reviewer = "fresh-independent-reviewer"
+        self.review()["reviewer_id"] = self.reviewer
+        self.grant()
+        result = self.cli()
+        self.assertEqual(0, result.returncode, result.stdout + result.stderr)
+        self.assertEqual(historical, self.data["visual_contract_versions"])
+
+    def test_fresh_reviewer_without_grant_keeps_identity_fallback(self):
+        for role in ("independent_reviewer", "user"):
+            with self.subTest(role=role):
+                self.setUp()
+                self.review().update(reviewer_id="fresh-independent-reviewer", role=role)
+                self.assert_not_verified()
+
+    def test_fresh_delegation_still_requires_inherited_capture_and_role(self):
+        for mode in ("inherited_capture", "wrong_role"):
+            with self.subTest(mode=mode):
+                self.setUp()
+                self.append_delta()
+                self.reviewer = "fresh-independent-reviewer"
+                self.review()["reviewer_id"] = self.reviewer
+                self.grant()
+                if mode == "inherited_capture":
+                    remaining = [item for item in self.data["facets"]["visual"]["evidence_ids"]
+                                 if item != "capture-0"]
+                    self.data["facets"]["visual"]["evidence_ids"] = remaining
+                    self.review()["artifact_ids_reviewed"] = list(remaining)
+                else:
+                    self.review()["role"] = "cold_player"
+                self.assert_not_verified()
+
     def test_empty_extension_preserves_old_behavior(self):
         self.data["visual_review_delegations"] = []
         self.assertEqual("VERIFIED", self.evaluate()["overall"])
@@ -287,7 +341,7 @@ class DelegationTests(unittest.TestCase):
                 self.assert_not_verified()
 
     def test_grant_does_not_relax_other_evidence_gates(self):
-        for mode in ("coverage", "reject", "cold_role", "target_hash", "approval_reviewer"):
+        for mode in ("coverage", "reject", "cold_role", "target_hash", "approval_binding"):
             with self.subTest(mode=mode):
                 self.setUp()
                 self.grant()
@@ -300,7 +354,7 @@ class DelegationTests(unittest.TestCase):
                 elif mode == "target_hash":
                     self.data["visual_contract_versions"][0]["targets"][0]["sha256"] = "f" * 64
                 else:
-                    self.data["visual_contract_versions"][0]["approval"]["reviewer_id"] = "other"
+                    self.data["visual_contract_versions"][0]["approval"]["binding_sha256"] = "f" * 64
                 self.assert_not_verified()
 
 

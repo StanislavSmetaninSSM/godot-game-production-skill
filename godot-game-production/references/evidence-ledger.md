@@ -38,7 +38,7 @@ SHA-256. Its immutable content has exactly these fields:
 | `run_id` | This ledger's run UUID. |
 | `contract_id` | Exact active visual contract ID. |
 | `contract_sha256` | `visual_contract.canonical_sha256` of the ordered root-to-active contract chain as a JSON array, omitting `approval` from each node. Even an initial contract uses a one-element array. This binds inherited and added/replaced target paths/hashes. |
-| `reviewer_id` | Actual independent visual reviewer, distinct from builder and matching target approval. |
+| `reviewer_id` | Actual independent visual reviewer, distinct from builder and matching this run's delegated final review. |
 | `grantor_role` | `user` describes the source of authority, not the reviewing agent. |
 | `scope` | `visual_review` |
 | `source_ref` | Traceable conversation/message or saved instruction reference. |
@@ -59,6 +59,14 @@ is not the chain order. Missing, duplicate or cyclic bases cannot authorize a gr
 Validation proves local structure and byte integrity, not who spoke, whether the
 quote really authorizes this scope, or whether the review occurred. The orchestrator
 and independent reviewer must verify the source instruction and actual authorship.
+When the original target approver is unavailable, still-applicable user authority
+may bind a fresh independent reviewer through a new delegation for this run and
+the entire unchanged active target chain. Preserve historical target approvals;
+never rewrite them or impersonate their reviewer. The fresh reviewer must actually
+compare every final capture with its approved target. A valid delegation replaces
+only the historical reviewer-identity equality check, not target approval,
+independence, exact evidence coverage, verdicts or any other facet. Without such
+a grant, the existing approval-reviewer identity requirement remains in force.
 Retain superseded/revoked grants in historical evidence outside the current ledger;
 never rewrite them or use them for current acceptance.
 

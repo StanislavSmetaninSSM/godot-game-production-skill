@@ -63,6 +63,13 @@ Remain `VISUAL_PENDING` until the initial contract receives exact target approva
 
 Generated targets are design evidence only. After approval, reproduce one representative target in the actual Godot project. Read `references/gameplay-evidence.md` and prove a complete causal core loop before content multiplication.
 
+For a new or substantially reworked core/signature mechanic, read
+`references/mechanic-playtests.md` while planning that loop. Schedule its applicable
+promise/property/transition → target-build clip → independent quality decision as
+a dependency before the content that relies on it. A completed gym/report or a
+list of action names does not close that dependency. Keep sufficient baseline
+behavior; an unrelated narrow fix does not start a new gym program.
+
 At that first playable loop, run the short exported-build and capture preflight in
 `references/gameplay-evidence.md`. Before freezing a candidate, exercise its risky
 mechanic intersections and applicable dimension-specific contacts. Reserve the full
@@ -80,8 +87,9 @@ Judge the boundary by what the image decides, not its filename: a texture implem
 
 ## Route only what is needed
 
-- Read `references/visual-quality.md` when reproducing an approved target or diagnosing composition, palette, scale, material, or readability gaps. It provides a measured passport and controlled comparisons for both 2D and 3D.
+- Read `references/visual-quality.md` when reproducing an approved target or diagnosing composition, palette, scale, material, or readability gaps. Compare the actual Godot result against the agreed fidelity criteria; recognisable style or a prototype label does not close material gaps. It provides a measured passport and controlled comparisons for both 2D and 3D.
 - Read `references/motion-quality.md` when authoring or judging motion, contacts, attack/effect timing, transitions, or reactive surroundings. Choose animation techniques by style and dimension; declare coverage before capture. Missing required observations remain non-passing.
+- Read `references/animation-2d-production.md` before budgeting or producing generated frame-based 2D animation: plan meaningful drawings/exposures per action, prove rough timed motion before detailed-frame multiplication, then use real video generation or individual native image-provider frames. Judge final movement at actual gameplay speed; render/capture counts and correct events cannot replace motion quality. Existing approval/provider gates remain.
 - Read `references/quality-tools.md` when using `scripts/frame_compare.py` or `scripts/motion_check.py` on captured images or project-exported telemetry. These are diagnostic helpers, not Godot capture adapters or acceptance gates; their results cannot replace the existing evidence and review requirements.
 - Read `references/production-operations.md` when the current production interval has two or more implementation slices scheduled to overlap or be delegated concurrently, or when multiple agents or worktrees will implement related parts of the same candidate. Do not read it merely for several serial steps in one bounded slice.
 - Read `references/gameplay-evidence.md` when planning or judging playtest matrices, fixtures, seeded coverage, or integrated player-journey evidence. This routing complements the existing post-approval core-loop use of that reference.

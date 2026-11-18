@@ -677,7 +677,11 @@ def _review_errors(
             errors.append(f"review {review_id} has the wrong role")
         if facet in {"visual", "ux_onboarding"} and review["reviewer_id"] == builder_id:
             errors.append(f"{facet} reviewer is the builder")
-        if approval_reviewer is not None and review["reviewer_id"] != approval_reviewer:
+        if (
+            approval_reviewer is not None
+            and review["reviewer_id"] != approval_reviewer
+            and not delegated_visual
+        ):
             errors.append("visual review does not bind the approval reviewer")
         review_artifact = artifact_index.get(review["review_artifact_id"])
         if review_artifact is None or review_artifact["kind"] != "review_record":

@@ -15,10 +15,13 @@ production task or asset notes. Separate observed values from chosen budgets.
 | Values and colour | Foreground/play/background value relationships, material/role palette, shadow/light colour, contrast at the smallest supported viewport. |
 | Shape and detail | Silhouette cues, proportions, edge/outline treatment, focal detail and quiet areas. |
 | Rendering | Pixel grid or line/brush scale for 2D; material response, lighting and depth cues for 3D; deliberate mixtures recorded explicitly. |
+| UI | Layout, screen occupancy, typography/icon treatment, hierarchy and state-specific overlays at the supported viewport. |
 | Motion and feedback | Drawing cadence or pose timing, important contacts, event/feedback relationships and effects whose appearance changes over time. |
 
-Use the approved target as the source. Exact visual copying is required only when
-the user's contract says so. A generated target may not have recoverable engine
+Use the exact approved target and agreed fidelity as the source. Record the
+observable criteria and any already-approved intentional differences alongside
+these axes; absent criteria are not permission to reduce quality. Pixel-identical
+copying is required only when the user's contract says so. A generated target may not have recoverable engine
 settings: record that uncertainty and the production mapping instead of inventing
 an exact FOV, light power or material value from a picture.
 
@@ -61,14 +64,32 @@ under the actual consuming camera rather than accepting an isolated asset crop.
 
 ## Review and bounded correction
 
-Give the independent reviewer exact captures and comparison conditions before
-builder rationale. Use one review for a coherent completed block; additional
+Give the independent reviewer the approved target, original quality promise,
+agreed criteria and exact Godot captures/comparison conditions before builder
+rationale. Compare the same target, view, state and scale across composition,
+silhouette/proportions, material/detail, lighting/palette, UI and applicable motion.
+Recognisable palette, genre resemblance or technically working systems cannot
+compensate for a material failure on another required axis. A prototype label,
+deadline or builder-chosen simplification does not lower the approved bar. Preserve
+only intentional differences that the applicable authority actually approved;
+self-approving a cheaper interpretation does not close the original promise.
+
+Use one review for a coherent completed block; additional
 specialists are useful only for a concrete unresolved risk.
 
 Record each actionable finding as:
 
 `criterion | capture/frame/region | observed vs expected (units) | player impact |
 owner/asset | concrete correction | repeatable verification | priority`
+
+For each required criterion, distinguish an observed gap from an unavailable or
+non-comparable observation. The first needs bounded correction; the second needs
+a useful capture or measurement, not a guessed defect. Both keep the affected
+acceptance non-passing. State any scoped supported claim separately. A large
+silhouette, architecture/detail or lighting gap cannot be waived as slightly
+similar. Resolve a new material quality tradeoff through existing authority,
+retaining the prior expectation and decision; do not rewrite the target to fit
+the candidate. Continue independent authorized work.
 
 Fix the largest player-visible gaps first, rerender the same controlled case,
 then check an affected alternate state/view. Keep adverse results. A changed

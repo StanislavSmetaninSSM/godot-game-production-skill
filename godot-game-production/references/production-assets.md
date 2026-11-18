@@ -47,6 +47,10 @@ the consuming Godot capture with the approved target under controlled conditions
 For an animated asset, use `motion-quality.md` to declare the relevant actions,
 facings and transitions before capture. The chosen art technique remains a
 production decision within the approved direction.
+For generated frame-based 2D animation, use `animation-2d-production.md`: discover
+real video generation before choosing purple-background clip extraction; otherwise
+author individual native image-provider frames. It includes a concrete timing,
+pivot, alpha and Godot integration example, without adding a reference approval path.
 
 - For surface textures, inspect repetition and seams, pattern scale, UV placement,
   stretching, and texel density on the actual mesh. Request neutral illumination

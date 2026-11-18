@@ -6,9 +6,29 @@ and time-driven effects. Preserve the approved technique: frame-by-frame sprites
 Do not replace a style with cut-out rigs merely to simplify measurement.
 
 For an approved generated frame-based 2D technique, read
-`animation-2d-production.md` for the video/purple-key and individual-image branches.
-The asset recipe supplies source frames; the coverage and target-build checks below
-still establish motion quality and do not replace the mechanic's promised behavior.
+`animation-2d-production.md` for the per-action drawing/exposure/feasibility record,
+rough-before-detail motion test and real video/purple-key or individual-image source
+branches. Source frames support the coverage and target-build checks below; neither
+their count nor correct mechanical events establish convincing movement.
+
+## Judge the movement, not only its bookkeeping
+
+Before detailed frame multiplication or content that depends on a new movement,
+review a complete rough timed sample through the actual production animation path.
+Then judge the final art in translated normal-speed gameplay at native play scale.
+Contact accuracy and source identity are necessary checks; separately assess body
+articulation, weight/support transfers, arcs, rhythm, anticipation, impact,
+follow-through, recovery and start/stop/loop transitions against the approved style.
+Reject a rigid illustration sliding between locations or abrupt unrelated poses
+when continuous body action was promised, even if gameplay and trace checks pass.
+
+Report render FPS, distinct meaningful drawings, timeline slots/holds and actual
+pose-exposure cadence separately. For distance-driven clips, use actual owner speed
+and stride rather than the source asset's reference-speed label. A long capture
+can contain only two authored poses, and several named actions can alias one
+inadequate sequence. Inspect that distinction before accepting coverage. A few rig
+keys with runtime interpolation or an approved intentionally held/limited animation
+are judged by their own visible contract; a blanket PNG-count threshold is invalid.
 
 ## Declare the coverage before capture
 

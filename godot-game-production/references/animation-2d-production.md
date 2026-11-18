@@ -1,10 +1,104 @@
 # Generated frames for 2D animation
 
-Use when approved production needs frame-based 2D animation. This example authors
-one right-facing, in-place walk for an already-approved character. Adapt the poses,
-cadence, size and facings to that game; six frames and the numbers below are example
-choices, not quality quotas. Keep the mechanic promise/transition dependency in
-`mechanic-playtests.md` and actual-build checks in `motion-quality.md`.
+Use when approved production needs frame-based 2D animation. Produce convincing
+body movement, not an inventory of action names with a few pictures attached.
+Plan motion and prove a rough timed sample before multiplying detailed artwork.
+Keep the mechanic dependency in `mechanic-playtests.md` and consuming-build
+judgment in `motion-quality.md`. The eight-drawing walk below is one worked
+example, not a quality certificate or a universal minimum for every technique.
+
+## Plan the motion before the pictures
+
+Keep one compact action table in the active feature's existing art/playtest notes:
+
+| Record | What the producer needs |
+| --- | --- |
+| Actor, action and intent | Approved style/technique, readable silhouette, weight, rhythm and player-visible purpose. |
+| Actual timing | Reference the authoritative duration, anticipation/contact/recovery or travel distance and speed; do not create another tuning owner. |
+| Visible motion | Contact/down/passing/up for gait; preparation, acceleration, impact, follow-through and recovery for attacks; support transfers for climb/mantle. Include relevant start/stop, interruption and exit transitions. |
+| Drawing and exposure budget | Distinct meaningful drawings, ordered exposures/holds and cycle seam. Mark reused drawings, aliases and intentional still poses explicitly. |
+| Feasibility | Actual source method, calls/time including rough work and retries, reusable assets and unfinished actions. Compare the whole promised set with available budget before spending it. |
+| Advance evidence | Rough timed sample and final consuming sequence at gameplay scale/speed, applicable contacts/transitions, independent quality decision and remaining gaps. |
+
+Separate three quantities: render/simulation FPS, how often the character drawing
+changes, and how many genuinely different drawings the action contains. A 60 FPS
+recording of two alternating textures still contains two drawings. A repeated
+closing slot, mirrored facing or multiple state names is not another authored
+motion phase. Pixel differences alone also do not prove meaningful pose changes.
+Skeletal interpolation is a different technique: a few rig keys can generate
+continuous intermediate poses; a texture-swapping sprite does not do that.
+
+For distance-driven loops, derive cycle time from actual travel/speed and then
+derive exposures from the ordered weights. For example, four drawings per 40 px
+at 42 px/s cycle in about 0.952 s: roughly 4.2 pose presentations/s, even if metadata
+claims 80 px/s or the game renders at 60 FPS. Count meaningful drawings and repeated
+timeline slots separately; changing the renderer FPS cannot supply missing motion.
+
+### Practical starting points for illustrated frame animation
+
+These are production-planning starting ranges, not scientific perception limits,
+universal requirements or automatic acceptance rules:
+
+| Moving action | Initial drawing budget to test |
+| --- | --- |
+| Full walk/run cycle | 8–12 distinct drawings, covering both sides' contact/down/passing/up and any needed flight phases. |
+| Crouched walk or climbing cycle | 8–12, with real leg/hand transfer, body compression and shifting support. |
+| Mantle, counterattack or assassination | 8–16 across the complete action and return, shaped to its intended mechanics. |
+| Short melee strike | 6–10 across readable anticipation, strike, contact/follow-through and recovery. |
+| Hurt or death | About 3–6 for a short recoil, 6–12 for a collapse; actual promised movement decides. |
+
+For drawn motion needing fluid articulation, 12–24 drawing exposures/s is a useful
+starting cadence, not a required output FPS or a number of new pictures for every
+second of a held pose. Duration, speed and action spacing can require a different
+budget. Intentional holds are valid; prolonged motion does not become convincing
+by holding one illustration while code translates the body. A shared pose may
+serve several actions only when each complete observed action remains convincing;
+ordinary melee renamed as assassination does not establish assassination staging.
+
+If a detailed moving action uses fewer drawings than these starting ranges, prove
+the rough motion against the same approved promise and obtain the existing
+independent quality decision before dependent production. A deadline, generation
+limit or builder-authored count is not that decision. If the source budget cannot
+support the promise, keep unfinished actions explicit and resolve the production
+constraint within existing authority; do not silently reduce quality, switch
+technique or retune gameplay to fit sparse art.
+
+For an explicitly approved limited/pixel style, use its observed cadence and
+movement contract instead of importing these ranges. An intentional still reading
+pose is judged as a hold; a rig is judged through its interpolated motion. A narrow
+colour/text fix preserves accepted animation and checks only affected behavior.
+
+### Rough motion → detailed frames → consuming game
+
+1. Block one representative complete movement and its important transition with
+   rough poses using available authorized tools. Set actual exposures and play it
+   at the intended speed/size; inspect body mechanics, arcs, weight, support changes,
+   start/stop and loop seam. Include this work in the source budget. Rough artwork
+   or a blocking rig is exploratory evidence, not completion of promised generated
+   final drawings, and does not permit an unapproved provider or technique switch.
+2. Put that rough sample in the production controller/animation path and obtain
+   the existing independent motion-quality advance decision before detailed-frame
+   multiplication. Check with the real speed, floor, camera and action/contact
+   clock. Repair the motion foundation first when it looks like sliding poses,
+   teleporting limbs or a rigid paper figure despite passing event/contact checks.
+3. Produce/refine the detailed coherent frames for the checked motion. Preserve
+   identity, body proportions, shared root/scale, costume/weapon and overlapping
+   hair/cloak movement. Add necessary in-betweens and follow-through; do not merely
+   polish the same inadequate key poses. Validate a timed preview as frames arrive.
+4. Recheck the final translated action in the target Godot build at normal speed
+   and native play scale, plus enlarged diagnostic views when useful. Capture full
+   cycles, relevant transitions/contact/recovery and actual new-art coverage.
+   Independent review separately judges convincing movement and correct events.
+   Correct timing, matching feet, numerous recorded screenshots and this table's
+   counts cannot substitute for that visible quality decision.
+
+Planning sources: [Adobe walk](https://www.adobe.com/creativecloud/animation/discover/animation-walk-cycle.html)
+and [run cycles](https://www.adobe.com/uk/creativecloud/animation/discover/animation-run-cycle.html)
+illustrate eight basic gait drawings; [Animperia exposures](https://animperia.com/learn/animating-on-twos)
+distinguishes 12/24 drawing rhythms from output FPS; [Mariel Cartwright's GDC session](https://gdcvault.com/play/1020575/)
+emphasizes keys, anticipation and timing under game-frame restrictions. The broader
+per-action ranges above are practical starting hypotheses, not quotas prescribed
+by those sources. Evaluate the approved game rather than copying a tutorial count.
 
 ## Choose from real capabilities
 
@@ -51,16 +145,19 @@ canvas and explicitly map its root/floor to the same output contract. Do not sub
 the output-cell dimensions as a native request without that preflight.
 
 Keep ample head/foot/cloak margins and unchanged approved fastener/trim. At normal
-playback the example's output-cell sequence has this 0.60-second cycle:
+playback this example uses eight distinct drawings at 12 drawing exposures/s: one
+cycle is 8/12 s (about 0.667 s). Times below are rounded; author exact multiples of 1/12 s:
 
 | Output | Start / hold | Pose to author or select |
 | --- | --- | --- |
-| walk_00.png | 0.00 / 0.08 s | Left forward contact, right trailing; clear foot silhouettes. |
-| walk_01.png | 0.08 / 0.12 s | Left down/support, right leg beginning its forward swing. |
-| walk_02.png | 0.20 / 0.10 s | Left support passes under/behind root, right passing/rising. |
-| walk_03.png | 0.30 / 0.08 s | Right forward contact, left trailing; opposite arm swing. |
-| walk_04.png | 0.38 / 0.12 s | Right down/support, left leg beginning forward swing. |
-| walk_05.png | 0.50 / 0.10 s | Right support passes behind root, left passing/rising into 00. |
+| walk_00.png | 0.000 / 0.0833 s | Left forward contact, right trailing; opposite arm swing. |
+| walk_01.png | 0.083 / 0.0833 s | Left down/support; body compresses under weight. |
+| walk_02.png | 0.167 / 0.0833 s | Right leg passes the left support; body returns toward middle height. |
+| walk_03.png | 0.250 / 0.0833 s | Left late support/up; right leg reaches toward the next contact. |
+| walk_04.png | 0.333 / 0.0833 s | Right forward contact, left trailing; opposite arm swing. |
+| walk_05.png | 0.417 / 0.0833 s | Right down/support; body compresses on the other side. |
+| walk_06.png | 0.500 / 0.0833 s | Left leg passes the right support; body returns toward middle height. |
+| walk_07.png | 0.583 / 0.0833 s | Right late support/up; left leg reaches into 00 without a closing-pose duplicate. |
 
 The root is fixed in the source; a stance foot sweeps backward relative to it.
 During translated gameplay, that sweep should counter the character's forward
@@ -103,9 +200,11 @@ timestamps rather than inferring duration from a filename or average FPS. For
 variable-rate footage, keep per-frame timing. Do not add `-r`/FPS conversion to this
 source extraction: it may insert/drop frames. Select a coherent complete cycle,
 record selected source indices/timestamps and intentional holds, then make distinct
-working copies named walk_00…05 for this example. A duplicate closing pose can be
-removed from the selected loop without deleting it from raw extraction. If six
-poses cannot represent the approved motion, adapt the frame count within authority;
+working copies named walk_00…07 for this example. Select the checked motion's actual
+needed drawings/exposures; do not downsample every returned clip to eight. A duplicate
+closing pose can be removed from the selected loop without deleting it from raw
+extraction. If eight poses cannot represent the approved motion, increase the
+working frame budget within authority;
 do not disguise an inadequate sequence with interpolation or duplicated images.
 
 For a separable opaque foreground, test RGB color keying on a single copied frame:
@@ -140,7 +239,7 @@ the smaller Godot output cell is a technical derivative, not this native request
 
 For example, the prompt for 02 preserves the locked contract above and requests:
 
-> Frame 02, right-facing walk passing pose at 0.20 seconds: left stance foot under
+> Frame 02, right-facing walk passing pose at 2/12 seconds: left stance foot under
 > or just behind the root, right knee swinging forward, opposite arm swing; retain
 > exact character/cloak construction from the identity reference and continuity
 > with checked frame 01. Fixed full-body camera, preflighted 1024×1024 source
@@ -170,9 +269,10 @@ Retain source/derived identities and transform with the existing asset notes.
 Put the selected, equal-canvas RGBA output cells in the consuming project's art directory.
 Preserve a short ordered frame/hold/source table in existing asset notes; no new
 mandatory JSON schema is needed. In Godot 4's SpriteFrames editor, create `walk`,
-add files in numeric order 00…05 and enable looping. At base speed 10 FPS and
-playback speed 1, set relative frame durations to 0.8,1.2,1.0,0.8,1.2,1.0 to obtain
-the table's holds. Godot duration is a relative multiplier: seconds = duration /
+add files in numeric order 00…07 and enable looping. At base speed 12 FPS and playback
+speed 1, set all eight relative frame durations to 1 to obtain exact 1/12 s holds.
+For a checked nonuniform cadence, set those relative weights from its actual
+exposure table instead. Godot duration is a relative multiplier: seconds = duration /
 (animation FPS × absolute playing speed), not a seconds-valued duration field.
 Verify the installed Godot version and actual playback after import.
 
@@ -182,13 +282,13 @@ position (-256,-448); apply the game's chosen art/world scale consistently. An
 existing rig/root setup can supply the equivalent mapping. Keep filtering/padding
 appropriate to the approved art; mirrored facings still require prop/contact review.
 If AnimationPlayer drives sprite frame changes, key discrete indices/textures at
-the table's start times, set loop length 0.60s and avoid interpolating pose indices.
+exact start times 0/12…7/12 s, set loop length 8/12 s and avoid interpolating pose indices.
 Choose one playback owner: do not let AnimatedSprite2D autoplay and AnimationPlayer
 compete for the same frames. Gameplay's authoritative movement/hit/contact owner
 publishes state; animation consumes it, including idle, interruption and retry.
 
 Capture the actual consuming Godot build at intended size and speed: the entire
-cycle, 05→00 seam, start/stop, relevant facings and action transitions. Check identity,
+cycle, 07→00 seam, start/stop, relevant facings and action transitions. Check identity,
 silhouette, root/camera jitter, loop cadence, foot/support-space drift, contact and
 cloak/prop continuity, alpha holes/spill and transparent foreground on actual scene
 backgrounds. Compare its appearance with the approved reference using
